@@ -3,9 +3,9 @@ import logging
 import time
 from typing import AsyncIterator, Iterator
 
-import models
 from bs4 import BeautifulSoup, Tag
 
+import models
 from . import utils
 from ..generic import Scraper
 from ..requester import HTTPClient, Limiter
@@ -17,6 +17,8 @@ client = HTTPClient()
 
 
 class SportproScraper(Scraper):
+    name = "sportpro"
+
     host = "https://www.sportpro.re"
     results_path = "/resultats/"
     
@@ -71,6 +73,7 @@ class SportproScraper(Scraper):
         table = soup.find_all("table", attrs={"id": "resList"})[0]
         for row in self.__parse_table(table):
             competition = models.Competition(
+                timekeeper=self.name,
                 name=row["Compétition"],
                 date=models.Date(
                     start=row["Date"]
@@ -94,14 +97,14 @@ class SportproScraper(Scraper):
                         gender=int(row["Clst sexe"]),
                         category=int(row["Clst cat."]),
                     ),
+                    license=row["Licence"],
+                    category=row["Cat."],
+                    race_number=row["Dossard"],
                     runner=models.Runner(
                         first_name=row["Prénom"],
                         last_name=row["Nom"],
                         birth_year=int(row["Né(e)"]),
                         gender=utils.get_gender(row["Sexe"]),
-                        license=row["Licence"],
-                        category=row["Cat."],
-                        race_number=row["Dossard"],
                     ),
                 ))
             except (KeyError, ValueError):
