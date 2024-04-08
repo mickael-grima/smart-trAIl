@@ -6,15 +6,19 @@ import models
 
 class Database(abc.ABC):
     @abc.abstractmethod
-    async def add_competitions(self, competition: models.Competition):
+    async def add_competition_event(self, competition: models.Competition) -> int:
         pass
 
     @abc.abstractmethod
-    async def add_competition_results(self, competition_id: int, results: list[models.Result]):
+    async def add_competition_results(
+            self,
+            competition_id: int,
+            results_mapping: dict[int, models.Result]
+    ):
         pass
 
     @abc.abstractmethod
-    async def add_runners(self, runners: list[models.Runner]):
+    async def add_runner(self, runner: models.Runner):
         pass
 
     @classmethod
