@@ -18,6 +18,7 @@ def read_data_file(name: str) -> str:
 htmls: dict[str, str] = {
     "resultats": read_data_file("resultats.html.test"),
     "transvolcano": read_data_file("transvolcano-longue.html.test"),
+    "tangue": read_data_file("tangue.html.test"),
 }
 
 
@@ -31,6 +32,8 @@ def mock_http_client():
                 return htmls["resultats"]
             case "/resultats/epreuve/05077-transvolcano-version-longue/":
                 return htmls["transvolcano"]
+            case "/resultats/epreuve/05079-tangue/":
+                return htmls["tangue"]
             case _:
                 raise ValueError(f"url={url} not supported for testing")
 
@@ -45,5 +48,15 @@ def mock_http_client():
 async def test_SportproScraper_scrap():
     scraper = scrapers.SportproScraper()
     competitions = list([c async for c in scraper.scrap()])
-    assert len(competitions) == 1, f"errors={scraper._errors}"
-    assert len(scraper._errors) == 3
+    assert len(competitions) == 2, f"errors={scraper._errors}"
+    assert len(scraper._errors) == 2
+
+    # check transvolcano results
+    transvolcano = [c for c in competitions if c.event == "Transvolcano Version Longue"][0]
+    assert len(transvolcano.results) == 336
+
+    # check tangue results
+    tangue = [c for c in competitions if c.event == "Tangue"][0]
+    assert len(tangue.results) == 544 + 192
+    assert len([r for r in tangue.results if r.rank is not None]) == 544
+    assert len([r for r in tangue.results if r.rank is None]) == 192
