@@ -9,4 +9,7 @@ class Scraper(abc.ABC):
 
     @abc.abstractmethod
     async def scrap(self) -> AsyncIterator[models.Competition]:
-        pass
+        """
+        Scrap whatever webpage is inheriting from Scraper
+        and yield the competitions
+        """

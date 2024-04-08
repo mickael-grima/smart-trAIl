@@ -1,9 +1,11 @@
 import re
+from datetime import date, datetime, time
+from typing import Callable, Any, TypeVar
 
 import models
 
-dst_regex = re.compile(r"(?P<dist>[0-9]+(\.[0-9]*)?)(\s*km)?")
-time_regex = re.compile(r"((?P<hours>[0-9]+):)?(?P<minutes>[0-5][0-9]):(?P<seconds>[0-5][0-9])")
+dst_regex = re.compile(r"^(?P<dist>[0-9]+(\.[0-9]*)?)(\s*km)?$")
+time_regex = re.compile(r"^((?P<hours>[0-9]+):)?(?P<minutes>[0-5][0-9]):(?P<seconds>[0-5][0-9])$")
 
 
 def parse_distance(text: str) -> float:
@@ -18,7 +20,7 @@ def parse_distance(text: str) -> float:
     return -1
 
 
-def parse_time(text: str) -> int:
+def parse_time(text: str) -> time | None:
     """
     Parse the time as text and convert it to a total of seconds
     Example:
@@ -27,11 +29,15 @@ def parse_time(text: str) -> int:
     match = time_regex.match(text)
     if match is not None:
         groups = match.groupdict()
-        hours = int(groups.get("hours", "0"))
+        hours = int(groups.get("hours") or "0")
         minutes = int(groups["minutes"])
         seconds = int(groups["seconds"])
-        return 3600 * hours + 60 * minutes + seconds
-    return -1
+        return time(hour=hours, minute=minutes, second=seconds)
+    return None
+
+
+def parse_date(text: str) -> date:
+    return datetime.strptime(text, "%d/%m/%Y").date()
 
 
 def get_gender(text: str) -> models.Gender:
@@ -54,3 +60,24 @@ def complete_url(host: str, url: str) -> str:
         return host + url
     else:
         return f"{host}/{url}"
+
+
+# Generic returned value after casting
+T = TypeVar('T')
+# default returned value
+D = TypeVar('D')
+
+
+def cast_or_default(
+        value: str,
+        func: Callable[[str], T],
+        default: D | None = None
+) -> T | D | None:
+    """
+    cast `value` to type `D` using func
+    If it fails, return default
+    """
+    try:
+        return func(value)
+    except:
+        return default

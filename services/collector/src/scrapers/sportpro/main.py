@@ -1,29 +1,28 @@
 import asyncio
 import logging
-import time
-from typing import AsyncIterator, Iterator
+from typing import AsyncIterator, Iterator, Type, TypeVar
 
 from bs4 import BeautifulSoup, Tag
 
 import models
+from . import data
 from . import utils
 from ..generic import Scraper
 from ..requester import HTTPClient, Limiter
+
+__all__ = ["SportproScraper"]
 
 logger = logging.getLogger(__name__)
 
 limiter = Limiter(1)
 client = HTTPClient()
 
+RowType = TypeVar("RowType", bound=data.Row)
+
 
 class SportproScraper(Scraper):
-    name = "sportpro"
-
     host = "https://www.sportpro.re"
     results_path = "/resultats/"
-    
-    # After this time (in second), we stop the scraping
-    _timeout = 600
     
     def __init__(self):
         # collections of competitions scraped
@@ -31,34 +30,30 @@ class SportproScraper(Scraper):
         # to it in this dictionary
         self._scraping_tasks: dict[models.Competition, asyncio.Future | None] = {}
 
+        # errors during each competition scraping
+        # we collect them and log them at the end
+        self._errors: list[Exception] = []
+
     async def scrap(self) -> AsyncIterator[models.Competition]:
-        start = time.time()
         async with limiter:
             html = await client.get(f"{self.host}{self.results_path}")
         
         # find competitions and scrap the corresponding results
         for url, competition in self.__scrap_competitions(html):
-            if url is None:
-                continue
             self._scraping_tasks[competition] = asyncio.ensure_future(self.__scrap_results(url, competition))
-        
-        logger.debug(f"About to scrap results for {len(self._scraping_tasks)} competitions")
+
+        logger.info(f"About to scrap results for {len(self._scraping_tasks)} competitions")
         while len(self._scraping_tasks) > 0:
-            if time.time() - start >= self._timeout:
-                logger.warning("Scraping took too long. Stop!")
-                break
-            
             done = set()
             
             # find all competition that are scraped already
             for comp, fut in self._scraping_tasks.items():
                 if fut.done():
-                    if isinstance(fut.result(), Exception):
-                        try:
-                            raise fut.result()
-                        except:
-                            logger.exception("Failure")
-                    yield comp
+                    try:
+                        fut.result()
+                        yield comp
+                    except Exception as exc:
+                        self._errors.append(exc)
                     done.add(comp)
             
             # remove the ones that are done
@@ -67,20 +62,17 @@ class SportproScraper(Scraper):
             
             # sleep 5 ms
             await asyncio.sleep(0.005)
+
+        # handle errors
+        if self._errors:
+            logger.warning(f"{len(self._errors)} collected!")
     
     def __scrap_competitions(self, html: str) -> Iterator[tuple[str | None, models.Competition]]:
         soup = BeautifulSoup(html, "lxml")
         table = soup.find_all("table", attrs={"id": "resList"})[0]
-        for row in self.__parse_table(table):
-            competition = models.Competition(
-                timekeeper=self.name,
-                name=row["Compétition"],
-                date=models.Date(
-                    start=row["Date"]
-                ),
-                distance=utils.parse_distance(row["Distance"]),
-            )
-            yield row.get("Résultats"), competition
+        for row in self.__parse_table(table, data.CompetitionRow):
+            competition = row.to_model()
+            yield row.results_url, competition
             logger.debug(f"Successfully scraped competition={competition}")
     
     async def __scrap_results(self, url: str, competition: models.Competition):
@@ -88,51 +80,49 @@ class SportproScraper(Scraper):
             html = await client.get(utils.complete_url(self.host, url))
         soup = BeautifulSoup(html, "lxml")
         table = soup.find_all("table", attrs={"id": "resList"})[0]
-        for row in self.__parse_table(table):
+        for row in self.__parse_table(table, data.ResultRow):
             try:
-                competition.results.append(models.Result(
-                    time=utils.parse_time(row["Temps"]),
-                    rank=models.Rank(
-                        scratch=int(row["Scratch"]),
-                        gender=int(row["Clst sexe"]),
-                        category=int(row["Clst cat."]),
-                    ),
-                    license=row["Licence"],
-                    category=row["Cat."],
-                    race_number=row["Dossard"],
-                    runner=models.Runner(
-                        first_name=row["Prénom"],
-                        last_name=row["Nom"],
-                        birth_year=int(row["Né(e)"]),
-                        gender=utils.get_gender(row["Sexe"]),
-                    ),
-                ))
-            except (KeyError, ValueError):
-                logger.exception("error extracting result")
-                continue
+                competition.results.append(row.to_model())
+            except:
+                logger.exception(f"Error formatting row={row} (url={url})")
         logger.debug(
             f"Successfully scraped {len(competition.results)} results "
             f"for competition={competition}")
     
     @staticmethod
-    def __parse_table(table: Tag) -> Iterator[dict[str, str]]:
+    def __parse_table(table: Tag, output: Type[data.Row]) -> Iterator[RowType]:
         """
         Parse an html table:
         - find the headers which will be the dictionaries keys
         - parse all rows and associate the found values to the headers as a dict
         """
-        # first, find headers
-        header = table.find_all("tr", attrs={"class": "header"})[0]
-        keys = [r.text for r in header.find_all("th")]
-        
-        for row in table.find_all("tr")[1:]:
-            data = {}
-            for i, r in enumerate(row.find_all("td")):
+        headers: list[str] = []
+        for row in table.find_all("tr"):
+            # everytime we encounter a header, we store it to better
+            # extract the following rows
+            if "header" in (row.get("class") or []):
+                headers = [r.text for r in row.find_all("th")]
+                continue
+
+            # extract the row, and map its values to the headers
+            d = {}
+            # needed for colspan attributes, to target the right header
+            offset: int = 0
+            for i, column in enumerate(row.find_all("td")):
+                # too many entries compared to the current headers
+                if i >= len(headers):
+                    break
+                header = headers[i + offset]
+                # update offset
+                offset += int(column.get("colspan", "1")) - 1
                 try:
-                    if keys[i] == "Résultats":  # find the URL to the results page
-                        data[keys[i]] = r.find_all("a")[0]["href"]
+                    if header == "Résultats":  # find the URL to the results page
+                        d[header] = column.find_all("a")[0]["href"]
                     else:
-                        data[keys[i]] = r.text
+                        d[header] = column.text
                 except (IndexError, KeyError, AttributeError):
+                    logger.debug(f"Error parsing row={row}")
                     continue
-            yield data
+            res = output.from_dict(d)
+            if res is not None and res.is_valid():
+                yield res

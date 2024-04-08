@@ -7,6 +7,15 @@ import aiohttp
 logger = logging.getLogger(__name__)
 
 
+class HTTPException(Exception):
+    def __init__(self, status: int = 200):
+        self._status = status
+
+    @property
+    def status(self) -> int:
+        return self._status
+
+
 class HTTPClient:
     def __init__(self, nb_retries: int = 3):
         self._nb_retries = nb_retries
@@ -49,11 +58,9 @@ class HTTPClient:
         except aiohttp.ClientError:
             if status == 429:
                 if retry_no >= self._nb_retries:
-                    logger.exception(f"Too many requests, even after {retry_no} retries")
-                    raise
+                    raise HTTPException(status=status)
                 return await self.get(url, params=params, retry_no=retry_no + 1)
-            logger.exception(f"Failed with status={status}")
-            raise
+            raise HTTPException(status=status)
         finally:
             msg = f"\"GET {url}\" {status}"
             if status >= 0:
@@ -66,6 +73,8 @@ class HTTPClient:
 
 
 class Limiter:
+    release_time = 1  # 1sec
+
     def __init__(self, rqs: int):
         """
         :param rqs: how many request per second allowed
@@ -81,7 +90,7 @@ class Limiter:
         await self._sem.acquire()
 
         async def release():
-            await asyncio.sleep(1)
+            await asyncio.sleep(self.release_time)
             self._sem.release()
 
         asyncio.ensure_future(asyncio.shield(release()))

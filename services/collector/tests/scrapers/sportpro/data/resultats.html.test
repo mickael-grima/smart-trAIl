@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <!--
+**********************************
+*     **   ** ***  * *** **      *
+*    *  * *    *  *  *   * *     *
+*    *  * *    *     **  * *     *
+*    *  * *    *     *   * *     *
+*     **   **  *     *** *       *
+**********************************
+* Copyright (c) Eddy MARIANNE    *
+* Oct'Ed Ingénierie - 2013       *
+* http://www.octed-ingenierie.fr *
+**********************************
+--><title>Résultats - Sport PRO Réunion - Partenaire de vos évènements sportifs réunionnais</title>
+    <meta name="description"
+          content="Consultez les résultats et classements des courses organisées par les partenaires de Sport PRO Réunion sur toute l'île : course à pied, cross, challenge, triathlon etc."/>
+    <meta name="keywords"
+          content="liste résultats résultat classements classement courses évènements sportifs réunionnais réunion sport course pied cross challenge triathlon dates"/>
+    <meta name="viewport" content="width=device-width"/>
+    <meta property="og:title" content="Les résultats sportifs sur Sport PRO Réunion"/>
+    <meta property="og:image" content="https://www.sportpro.re/imgs/resultats-min.png"/>
+    <meta property="og:site_name" content="Sport PRO Réunion"/>
+    <base href="https://www.sportpro.re/"/>
+    <link rel="shortcut icon" type="image/x-icon" href="imgs/sportpro.ico"/>
+    <link rel="stylesheet" href="css/sportpro.22.min.css" type="text/css"/>
+    <!--[if lt IE 7]>
+    <link rel="stylesheet" href="css/sportpro.ie6.0.min.css" type="text/css"/>
+    <![endif]-->
+    <script defer type="text/javascript" src="js/mootools-core-1.4.0.js"></script>
+    <script defer type="text/javascript" src="js/mootools-more-1.4.0.1.js"></script>
+    <script defer type="text/javascript" src="js/sportpro.5.min.js"></script>
+    <script type="text/javascript">/*
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-41054599-1', 'sportpro.re');
+  ga('send', 'pageview');*/
+    </script>
+</head>
+<body>
+<div id="page">
+    <div id="header">
+        <div id="logo">
+            <a href="."><img src="imgs/Logo.SportPro.2023.web.png"
+                             alt="Sport PRO : partenaire de vos évènements sportifs réunionnais"/></a>
+        </div>
+        <div id="menu">
+            <ul>
+                <li><a href="courses/">Courses</a></li>
+                <li><a class="focus" href="resultats/">Résultats</a></li>
+                <li id="liLive"><a href="live/"><img src="imgs/new.16.png" alt="nouveauté"/>Live</a></li>
+                <li><a class="menuActu" href="actualites/">News</a></li>
+                <!--<li style="display:block;float:left;">|</li>-->
+                <li><a href="qui-sommes-nous.php">Qui sommes-nous ?</a></li>
+                <li><a href="nos-services.php">Nos services</a></li>
+                <!--<li><a  href="avis.php">Avis</a></li>-->
+                <!--<li><a  href="partenaires.php">Partenaires</a></li>-->
+                <li><a href="contact.php">Contact</a></li>
+                <li><a href="faq.php">Aide</a></li>
+                <li id="liMembre"><a href="espace-membre">Mon Espace</a></li>
+            </ul>
+        </div>
+        <div class="fleche-menu gauche"></div>
+        <div class="fleche-menu droite"></div>
+    </div>
+    <div id="content">
+        <div id="index">
+            <a href="."> Accueil
+            </a> > Liste des résultats
+        </div>
+        <div id="cadres">
+            <div id="c_evenements" class="cadre">
+                <div id="a_venir" class="cadre_titre">À venir</div>
+                <div class="cadre_contenu">
+                    <div class="cadreCourse"><a
+                            href="courses/01743-trail-griffe-du-diable-piton-de-la-fournaise-jacob/">
+                        <div class="date">13 Avril 2024<br/>Sainte-Rose</div>
+                        <div class="info">La griffe du diable 27km</div>
+                        <div class="infoPlus">Trail Griffe du Diable Piton de la Fournaise Jacob</div>
+                    </a></div>
+                    <div class="cadreCourse"><a
+                            href="courses/01743-trail-griffe-du-diable-piton-de-la-fournaise-jacob/">
+                        <div class="date">13 Avril 2024<br/>Sainte-Rose</div>
+                        <div class="info">La griffle du diable 15km</div>
+                        <div class="infoPlus">Trail Griffe du Diable Piton de la Fournaise Jacob</div>
+                    </a></div>
+                    <div class="cadreCourse"><a href="courses/01776-la-panonnaise-trophee-paul-canaguy/">
+                        <div class="date">13 Avril 2024<br/>Bras-Panon</div>
+                        <div class="info">10km Panonnaise</div>
+                        <div class="infoPlus">La Panonnaise - Trophée Paul Canaguy</div>
+                    </a></div>
+                </div>
+                <div class="cadre_lien"><a href="courses/">Toutes les courses</a></div>
+            </div>
+            <div id="c_resultats" class="cadre">
+                <div class="cadre_titre">Résultats</div>
+                <div class="cadre_contenu">
+                    <div class="cadreResultat"><a href="resultats/epreuve/06074-rando-de-la-vigie/">
+                        <div class="date">07 Avril 2024<br/>Saint-Denis</div>
+                        <div class="info">Rando de la Vigie</div>
+                        <div class="infoPlus">Trail des Cordistes Challenge RRunning Réunion 2024</div>
+                    </a></div>
+                    <div class="cadreResultat"><a href="resultats/epreuve/06081-10km-ste-suzanne-open/">
+                        <div class="date">07 Avril 2024<br/>Sainte-Suzanne</div>
+                        <div class="info">10km Ste Suzanne Open</div>
+                        <div class="infoPlus">Championnat 10km Ste Suzanne</div>
+                    </a></div>
+                    <div class="cadreResultat"><a
+                            href="resultats/epreuve/06080-championnat-10km-sainte-suzanne-licencie/">
+                        <div class="date">07 Avril 2024<br/>Sainte-Suzanne</div>
+                        <div class="info">Championnat 10km Sainte Suzanne licencié</div>
+                        <div class="infoPlus">Championnat 10km Ste Suzanne</div>
+                    </a></div>
+                </div>
+                <div class="cadre_lien"><a href="resultats/">Tous les résultats</a></div>
+            </div>
+            <div id="c_actualites" class="cadre">
+                <div class="cadre_titre">Actualités</div>
+                <div class="cadreActu"><a href='actualites/00091-inscriptions-des-licencies-aux-epreuves-de-tr/'>
+                    <div class="cadre_contenu">
+                        <div class="date">01 Avril 2024</div>
+                        <div class="info">Inscriptions des licenciés aux épreuves de Tr</div>
+                        <div class="infoPlus">Vers la labellisation des inscriptions en ligne de la FFTRI (Fédération
+                            Fra
+                        </div>
+                    </div>
+                </a></div>
+                <div class="cadreActu"><a href='actualites/00090-le-parcours-de-prevention-sante-pps-ffa/'>
+                    <div class="cadre_contenu">
+                        <div class="date">24 Mars 2024</div>
+                        <div class="info">Le Parcours de Prévention Santé (PPS) FFA</div>
+                        <div class="infoPlus">Fin du certificat médical</div>
+                    </div>
+                </a></div>
+                <div class="cadre_lien"><a href="actualites/">Toutes les actualités</a></div>
+            </div>
+            <div class="cadre">
+                <div class="cadre_titre">Partenaire officiel</div>
+                <div class="cadre_contenu center">Ligue Réunionnaise d'Athlétisme<br/><img class="lienExterne"
+                                                                                           src="imgs/LRA2022.100.png"
+                                                                                           alt="LRA - Ligue Réunionnaise d'Athlétisme, partenaire officiel de Sport PRO Réunion"
+                                                                                           data-page="reunion.athle.com"/>
+                </div>
+                <div class="cadre_lien"></div>
+            </div>
+        </div>
+        <div id="text">
+            <h1>LES RÉSULTATS DES COURSES</h1>
+            <div class="text fullwidth">
+                <h2>Tous les résultats et classements disponibles</h2>
+                <p>Retrouvez les résultats des différentes courses organisées par les partenaires de Sport PRO Réunion
+                    ainsi que les classements des participants. Pour recevoir vos résultats personnalisés après chaque
+                    course directement par email, <a href="espace-membre/creer-mon-compte.php">créez votre compte</a> !
+                </p>
+                <hr/>
+                <div style="margin-top:10px" class="fb-like" data-layout="standard" data-action="like"
+                     data-show-faces="false" data-share="true"></div>
+                <table id="resList">
+                    <tr class="header">
+                        <th>Date</th>
+                        <th class="hidden">Épreuve</th>
+                        <th class="toHide">Compétition</th>
+                        <th class="toHide">Épreuve</th>
+                        <th class="hidden">Infos</th>
+                        <th class="toHide">Distance</th>
+                        <th class="toHide">Ville</th>
+                        <th class="hidden">Rés.</th>
+                        <th class="toHide">Résultats</th>
+                    </tr>
+                    <tr class="">
+                        <td>07/04/2024</td>
+                        <td class="hidden" title="Trail des Cordistes Challenge RRunning Réunion 2024"><p>Rando de la
+                            Vigie<br/>Trail des Cordistes Challenge RRunning Réunion 2024</p></td>
+                        <td class="toHide" title="Trail des Cordistes Challenge RRunning Réunion 2024">Trail des
+                            Cordistes Challenge RRunning Réunion 2024
+                        </td>
+                        <td class="toHide" title="Rando de la Vigie">Rando de la Vigie</td>
+                        <td class="hidden"><p>10 km<br/>Saint-Denis</p></td>
+                        <td class="toHide">10 km</td>
+                        <td class="toHide" title="Saint-Denis">Saint-Denis</td>
+                        <td class="center toHide" style="vertical-align:middle;line-height:100%;"><a
+                                href="resultats/epreuve/06074-rando-de-la-vigie/"><img src="imgs/zoom-min.png"
+                                                                                       alt="loupe" title="Consulter"
+                                                                                       style="vertical-align:middle;"/></a>
+                        </td>
+                        <td class="center hidden" style="vertical-align:middle;line-height:100%;"><a
+                                href="resultats/epreuve/06074-rando-de-la-vigie/"><img src="imgs/zoom-min.png"
+                                                                                       alt="loupe" title="Consulter"
+                                                                                       style="vertical-align:middle;"/></a>
+                        </td>
+                    </tr>
+                    <tr class="">
+                        <td>02/07/2023</td>
+                        <td class="hidden" title="Finale championnat Moto Cross 2023"><p>MX1<br/>Finale championnat Moto
+                            Cross 2023</p></td>
+                        <td class="toHide" title="Finale championnat Moto Cross 2023">Finale championnat Moto Cross
+                            2023
+                        </td>
+                        <td class="toHide" title="MX1">MX1</td>
+                        <td class="hidden"><p>1.85 km<br/>Saint-Joseph</p></td>
+                        <td class="toHide">1.85 km</td>
+                        <td class="toHide" title="Saint-Joseph">Saint-Joseph</td>
+                        <td class="center toHide" style="vertical-align:middle;line-height:100%;"><span
+                                title="Non disponible">N/D</span></td>
+                        <td class="center hidden" style="vertical-align:middle;line-height:100%;"><span
+                                title="Non disponible">N/D</span></td>
+                    </tr>
+                    <tr class="">
+                        <td>22/01/2023</td>
+                        <td class="hidden" title="Course Tangue/Volcano"><p>Tangue<br/>Course Tangue/Volcano</p></td>
+                        <td class="toHide" title="Course Tangue/Volcano">Course Tangue/Volcano</td>
+                        <td class="toHide" title="Tangue">Tangue</td>
+                        <td class="hidden"><p>22 km<br/>Plaine des Cafres</p></td>
+                        <td class="toHide">22 km</td>
+                        <td class="toHide" title="Plaine des Cafres">Plaine des Cafres</td>
+                        <td class="center toHide" style="vertical-align:middle;line-height:100%;"><a
+                                href="resultats/epreuve/05079-tangue/"><img src="imgs/zoom-min.png" alt="loupe"
+                                                                            title="Consulter"
+                                                                            style="vertical-align:middle;"/></a></td>
+                        <td class="center hidden" style="vertical-align:middle;line-height:100%;"><a
+                                href="resultats/epreuve/05079-tangue/"><img src="imgs/zoom-min.png" alt="loupe"
+                                                                            title="Consulter"
+                                                                            style="vertical-align:middle;"/></a></td>
+                    </tr>
+                    <tr class="">
+                        <td>22/01/2023</td>
+                        <td class="hidden" title="Course Tangue/Volcano"><p>Transvolcano 40<br/>Course Tangue/Volcano
+                        </p></td>
+                        <td class="toHide" title="Course Tangue/Volcano">Course Tangue/Volcano</td>
+                        <td class="toHide" title="Transvolcano 40">Transvolcano 40</td>
+                        <td class="hidden"><p>40 km<br/>Plaine des Cafres</p></td>
+                        <td class="toHide">40 km</td>
+                        <td class="toHide" title="Plaine des Cafres">Plaine des Cafres</td>
+                        <td class="center toHide" style="vertical-align:middle;line-height:100%;"><a
+                                href="resultats/epreuve/05078-transvolcano-40/"><img src="imgs/zoom-min.png" alt="loupe"
+                                                                                     title="Consulter"
+                                                                                     style="vertical-align:middle;"/></a>
+                        </td>
+                        <td class="center hidden" style="vertical-align:middle;line-height:100%;"><a
+                                href="resultats/epreuve/05078-transvolcano-40/"><img src="imgs/zoom-min.png" alt="loupe"
+                                                                                     title="Consulter"
+                                                                                     style="vertical-align:middle;"/></a>
+                        </td>
+                    </tr>
+                    <tr class="">
+                        <td>22/01/2023</td>
+                        <td class="hidden" title="Course Tangue/Volcano"><p>Transvolcano Version Longue<br/>Course
+                            Tangue/Volcano</p></td>
+                        <td class="toHide" title="Course Tangue/Volcano">Course Tangue/Volcano</td>
+                        <td class="toHide" title="Transvolcano Version Longue">Transvolcano Version Longue</td>
+                        <td class="hidden"><p>66 km<br/>Plaine des Cafres</p></td>
+                        <td class="toHide">66 km</td>
+                        <td class="toHide" title="Plaine des Cafres">Plaine des Cafres</td>
+                        <td class="center toHide" style="vertical-align:middle;line-height:100%;"><a
+                                href="resultats/epreuve/05077-transvolcano-version-longue/"><img src="imgs/zoom-min.png"
+                                                                                                 alt="loupe"
+                                                                                                 title="Consulter"
+                                                                                                 style="vertical-align:middle;"/></a>
+                        </td>
+                        <td class="center hidden" style="vertical-align:middle;line-height:100%;"><a
+                                href="resultats/epreuve/05077-transvolcano-version-longue/"><img src="imgs/zoom-min.png"
+                                                                                                 alt="loupe"
+                                                                                                 title="Consulter"
+                                                                                                 style="vertical-align:middle;"/></a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="clear"><!--pour IE6--></div>
+    </div>
+</div>
+<div id="footer">
+    <div id="megafooter">
+        <div id="menuPied">
+            <ul>
+                <li><a href=".">Accueil</a></li>
+                <li><a href="courses/">Courses à venir</a></li>
+                <li><a href="resultats/">Résultats</a></li>
+                <li><a href="live/">Live</a></li>
+                <li><a href="actualites/">Actualités</a></li>
+                <li><a href="qui-sommes-nous.php">Qui sommes-nous ?</a></li>
+                <li><a href="nos-services.php">Nos services</a></li>
+                <li><a href="contact.php">Nous contacter</a></li>
+                <li><a href="faq.php">FAQ / Aide</a></li>
+                <li><a href="espace-membre/">Se connecter</a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="copyright">
+        Copyright Sport PRO Réunion © 2013 / 2024 - <a href="conditions-generales-d-utilisation.php">C.G.U.</a> - <a
+            href="protection-des-donnees-personnelles.php">Données personnelles</a> - <a href="mentions-legales.php">Mentions
+        légales</a>
+    </div>
+</div>
+</body>
+</html>
