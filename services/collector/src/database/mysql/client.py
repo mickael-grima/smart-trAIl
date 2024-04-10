@@ -62,6 +62,31 @@ class MySQLClient(Database):
         finally:
             await self.dispose()
 
+    async def add_competition(self, competition: models.Competition):
+        # first add competitions and runners, and collect their db ids
+        runners = [result.runner for result in competition.results]
+        ids = await asyncio.gather(
+            self.__add_competition_event(competition),
+            *[self.__add_runner(runner) for runner in runners]
+        )
+
+        # get competition id and runners ids
+        event_id = ids[0]
+        runner_ids = [rid for rid in ids[1:]]
+
+        # map competition.id & runner.id to its result
+        results: dict[int, models.Result] = {}
+        for j, result in enumerate(competition.results):
+            runner_id = runner_ids[j]
+            if runner_id is None:
+                logger.warning(f"Missing runner id for result={result}")
+                continue
+            results[runner_id] = result
+
+        # store results
+        if results:
+            await self.__add_competition_results(event_id, results)
+
     @asynccontextmanager
     async def __db_session(self) -> AsyncContextManager[AsyncSession]:
         async_session = async_sessionmaker(self._engine)
@@ -103,12 +128,12 @@ class MySQLClient(Database):
         comp_id = int(res[0])
         if comp_id > 0:
             return comp_id
-        return await self.get_competition_id(
+        return await self.__get_competition_id(
             competition.name,
             competition.timekeeper,
         )
 
-    async def add_competition_event(
+    async def __add_competition_event(
             self,
             competition: models.Competition
     ) -> int | None:
@@ -125,13 +150,13 @@ class MySQLClient(Database):
         event_id = int(res[0])
         if event_id > 0:
             return event_id
-        return await self.get_competition_event_id(
+        return await self.__get_competition_event_id(
             competition.event,
             competition.date.start,
             competition.distance,
         )
 
-    async def add_runner(self, runner: models.Runner) -> int | None:
+    async def __add_runner(self, runner: models.Runner) -> int | None:
         """
         add runners that are not yet stored in the db
         :return: the sorted list of newly created ids, in the order
@@ -144,13 +169,13 @@ class MySQLClient(Database):
         runner_id = int(res[0])
         if runner_id > 0:
             return runner_id
-        return await self.get_runner_id(
+        return await self.__get_runner_id(
             runner.first_name,
             runner.last_name,
             runner.birth_year,
         )
 
-    async def add_competition_results(
+    async def __add_competition_results(
             self,
             event_id: int,
             results_mapping: dict[int, models.Result]
@@ -172,7 +197,7 @@ class MySQLClient(Database):
                 ])
                 await session.execute(stmt)
 
-    async def get_runner_id(self, fname: str, lname: str, birth_year: int) -> int | None:
+    async def __get_runner_id(self, fname: str, lname: str, birth_year: int) -> int | None:
         """
         Get runner id from the DB
         """
@@ -187,7 +212,7 @@ class MySQLClient(Database):
             if runner_id is not None:
                 return runner_id[0]
 
-    async def get_competition_id(self, name: str, timekeeper: str) -> int | None:
+    async def __get_competition_id(self, name: str, timekeeper: str) -> int | None:
         """
         Get competition id from the DB
         """
@@ -201,7 +226,7 @@ class MySQLClient(Database):
             if comp_id is not None:
                 return comp_id[0]
 
-    async def get_competition_event_id(
+    async def __get_competition_event_id(
             self,
             name: str,
             start_date: datetime.date,

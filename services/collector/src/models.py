@@ -38,7 +38,7 @@ class Runner(pydantic.BaseModel):
 
 class Result(pydantic.BaseModel):
     runner: Runner
-    time: datetime.time | None = None
+    time: datetime.timedelta | None = None
     rank: Rank | None = None
     status: ResultStatus
     race_number: int

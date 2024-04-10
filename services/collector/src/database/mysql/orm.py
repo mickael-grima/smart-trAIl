@@ -108,9 +108,13 @@ class Runner(Base):
 
     @classmethod
     def from_model(cls, runner: models.Runner) -> dict:
+        birth_year = runner.birth_year
+        # year before 1901 are not accepted (and not relevant anyway)
+        if birth_year is not None and birth_year < 1901:
+            birth_year = None
         return dict(
             first_name=runner.first_name,
             last_name=runner.last_name,
-            birth_year=runner.birth_year,
+            birth_year=birth_year,
             gender=runner.gender.value,
         )

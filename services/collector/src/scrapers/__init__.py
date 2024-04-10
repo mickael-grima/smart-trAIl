@@ -1,2 +1,2 @@
 from .generic import Scraper
-from .sportpro import SportproScraper
+from .main import discover

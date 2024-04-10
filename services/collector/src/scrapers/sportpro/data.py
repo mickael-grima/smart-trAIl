@@ -1,7 +1,7 @@
 import abc
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import timedelta, date
 from typing import Optional
 
 import models
@@ -23,7 +23,7 @@ class Row(abc.ABC):
 @dataclass
 class CompetitionRow(Row):
     competition: str
-    date: datetime.date
+    date: date
     distance: float
     results_url: str | None
     event: str | None = None
@@ -62,7 +62,7 @@ class ResultRow(Row):
     first_name: str
     last_name: str
     gender: str
-    time: Optional[datetime.time] = None
+    time: Optional[timedelta] = None
 
     status: str = "finisher"
     birth: int | None = None

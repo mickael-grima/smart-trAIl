@@ -13,3 +13,4 @@ class Scraper(abc.ABC):
         Scrap whatever webpage is inheriting from Scraper
         and yield the competitions
         """
+        yield

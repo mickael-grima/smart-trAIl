@@ -1,6 +1,6 @@
 import re
-from datetime import date, datetime, time
-from typing import Callable, Any, TypeVar
+from datetime import date, datetime, timedelta
+from typing import Callable, TypeVar
 
 import models
 
@@ -20,7 +20,7 @@ def parse_distance(text: str) -> float:
     return -1
 
 
-def parse_time(text: str) -> time | None:
+def parse_time(text: str) -> timedelta | None:
     """
     Parse the time as text and convert it to a total of seconds
     Example:
@@ -32,7 +32,7 @@ def parse_time(text: str) -> time | None:
         hours = int(groups.get("hours") or "0")
         minutes = int(groups["minutes"])
         seconds = int(groups["seconds"])
-        return time(hour=hours, minute=minutes, second=seconds)
+        return timedelta(hours=hours, minutes=minutes, seconds=seconds)
     return None
 
 

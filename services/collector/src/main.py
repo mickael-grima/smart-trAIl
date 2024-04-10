@@ -2,36 +2,36 @@ import asyncio
 import logging
 import time
 
-import models
-from scrapers import SportproScraper
-from database.mysql import Client as DBClient, add_competition
+from scrapers import discover as discover_scrapers, Scraper
+from database import session as db_session, Database
+from controller import BackgroundController
 
 logger = logging.getLogger(__name__)
 
 
-async def run():
-    db = await DBClient.create()
-    scraper = SportproScraper()
-
-    # increment by 1 everytime a db update is started
-    # decrement by 1 everytime a db update is finished
-    n = 0
-
-    async def store(comp: models.Competition):
-        nonlocal n, db
-        await add_competition(db, comp)
-        n -= 1
+async def run_single(scraper: Scraper, db: Database):
+    controller = BackgroundController()
 
     async for competition in scraper.scrap():
-        n += 1
-        asyncio.ensure_future(asyncio.create_task(store(competition)))
+        controller.run_in_background(db.add_competition(competition))
 
     log_time = time.time()
-    while n > 0:
+    while controller:
+        # log progress every 10 seconds
         if time.time() - log_time >= 10:
-            logger.info(f"DATABASE update: {n} updates still on-going ...")
+            logger.info(
+                f"DATABASE update: {controller.number_background_tasks} "
+                f"updates still on-going ...")
             log_time = time.time()
         await asyncio.sleep(0.01)
+
+
+async def run():
+    async with db_session() as db:
+        await asyncio.gather(*[
+            run_single(scraper, db)
+            for scraper in discover_scrapers()
+        ])
 
 
 if __name__ == '__main__':
