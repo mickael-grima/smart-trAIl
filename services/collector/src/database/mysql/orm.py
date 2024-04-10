@@ -1,6 +1,6 @@
 from datetime import time, date
 
-from sqlalchemy import ForeignKey, UniqueConstraint, String, Date, Time
+from sqlalchemy import ForeignKey, UniqueConstraint, String, Date, Time, PrimaryKeyConstraint
 from sqlalchemy.dialects.mysql import SMALLINT, CHAR, INTEGER, YEAR
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column
 
@@ -38,7 +38,9 @@ class CompetitionEvent(Base):
     competition_id: Mapped[int] = mapped_column(ForeignKey("competitions.id"), nullable=False)
 
     # competition should be unique with name, timekeeper and start_date
-    __table_args__ = (UniqueConstraint("name", "start_date", "distance"),)
+    __table_args__ = (
+        UniqueConstraint("name", "start_date", "distance"),
+    )
 
     @classmethod
     def from_model(cls, competition_id: int, comp: models.Competition) -> dict:
@@ -54,7 +56,6 @@ class Result(Base):
     __tablename__ = "results"
 
     # ids
-    id: Mapped[int] = mapped_column(INTEGER, primary_key=True, autoincrement=True)
     runner_id: Mapped[int] = mapped_column(ForeignKey("runners.id"), nullable=False)
     event_id: Mapped[int] = mapped_column(ForeignKey("competitionEvents.id"), nullable=False)
 
@@ -67,6 +68,10 @@ class Result(Base):
     scratch_ranking: Mapped[int] = mapped_column(SMALLINT(unsigned=True), nullable=True)
     gender_ranking: Mapped[int] = mapped_column(SMALLINT(unsigned=True), nullable=True)
     category_ranking: Mapped[int] = mapped_column(SMALLINT(unsigned=True), nullable=True)
+
+    __table_args__ = (
+        PrimaryKeyConstraint('runner_id', 'event_id', name="runner-event-pk"),
+    )
 
     @classmethod
     def from_model(
@@ -97,7 +102,9 @@ class Runner(Base):
     birth_year: Mapped[int] = mapped_column(YEAR, nullable=True)
     gender: Mapped[str] = mapped_column(CHAR(1), default="U", nullable=False)
 
-    __table_args__ = (UniqueConstraint("first_name", "last_name", "birth_year"),)
+    __table_args__ = (
+        UniqueConstraint("first_name", "last_name", "birth_year"),
+    )
 
     @classmethod
     def from_model(cls, runner: models.Runner) -> dict:

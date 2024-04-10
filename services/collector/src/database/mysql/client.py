@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import logging
 from contextlib import asynccontextmanager
@@ -14,6 +15,17 @@ from . import orm
 from ..generic import Database
 
 logger = logging.getLogger(__name__)
+
+locks: dict[str, asyncio.Lock] = {}
+
+
+def get_lock(name: str) -> asyncio.Lock:
+    global locks
+    lock = locks.get(name)
+    if lock is None:
+        lock = asyncio.Lock()
+        locks[name] = lock
+    return lock
 
 
 class MySQLClient(Database):
@@ -57,15 +69,21 @@ class MySQLClient(Database):
             async with session.begin():
                 yield session
 
-    async def __insert(self, stmt: Insert) -> list[int]:
+    async def __insert(self, stmt: Insert, lock_table: str) -> list[int]:
         """
         Execute insert statement
+
+        :param stmt: INSERT stmt to execute
+        :param lock_table: If not None, create an async lock unique to `lock_table` string
+        (usually the table's name). Useful to avoid Deadlocks
+
         :return: the sorted list of newly created ids, in the order
             of the provided data
         """
-        async with self.__db_session() as session:
-            result = await session.execute(stmt)
-            return result.inserted_primary_key
+        async with get_lock(lock_table):
+            async with self.__db_session() as session:
+                result = await session.execute(stmt)
+                return result.inserted_primary_key
 
     async def __add_competition(
             self,
@@ -81,7 +99,7 @@ class MySQLClient(Database):
         stmt = stmt.on_duplicate_key_update(
             name=stmt.inserted.name
         )
-        res = await self.__insert(stmt)
+        res = await self.__insert(stmt, orm.Competition.__tablename__)
         comp_id = int(res[0])
         if comp_id > 0:
             return comp_id
@@ -103,7 +121,7 @@ class MySQLClient(Database):
         stmt = stmt.on_duplicate_key_update(
             distance=stmt.inserted.distance
         )
-        res = await self.__insert(stmt)
+        res = await self.__insert(stmt, orm.CompetitionEvent.__tablename__)
         event_id = int(res[0])
         if event_id > 0:
             return event_id
@@ -122,7 +140,7 @@ class MySQLClient(Database):
         obj = orm.Runner.from_model(runner)
         stmt = insert(orm.Runner).values(obj)
         stmt = stmt.on_duplicate_key_update(gender=stmt.inserted.gender)
-        res = await self.__insert(stmt)
+        res = await self.__insert(stmt, orm.Runner.__tablename__)
         runner_id = int(res[0])
         if runner_id > 0:
             return runner_id
@@ -141,17 +159,18 @@ class MySQLClient(Database):
         Careful: this step suppose that the corresponding competition and runners
         are already stored in the DB
         """
-        async with self.__db_session() as session:
-            # first remove results for this competition
-            stmt = delete(orm.Result).where(orm.Result.event_id == event_id)
-            await session.execute(stmt)
+        async with get_lock(orm.Result.__tablename__):
+            async with self.__db_session() as session:
+                # first remove results for this competition
+                stmt = delete(orm.Result).where(orm.Result.event_id == event_id)
+                await session.execute(stmt)
 
-            # add results
-            stmt = insert(orm.Result).values([
-                orm.Result.from_model(result, event_id, runner_id)
-                for runner_id, result in results_mapping.items()
-            ])
-            await session.execute(stmt)
+                # add results
+                stmt = insert(orm.Result).values([
+                    orm.Result.from_model(result, event_id, runner_id)
+                    for runner_id, result in results_mapping.items()
+                ])
+                await session.execute(stmt)
 
     async def get_runner_id(self, fname: str, lname: str, birth_year: int) -> int | None:
         """
