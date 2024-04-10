@@ -1,4 +1,4 @@
-from datetime import time, date
+from datetime import timedelta, date
 from typing import Optional, Callable, Any
 
 import pytest
@@ -25,12 +25,13 @@ def test_parse_distance(text: str, expected: float):
 @pytest.mark.parametrize(
     "text,expected",
     [
-        ("01:45:34", time(hour=1, minute=45, second=34)),
-        ("45:34", time(hour=0, minute=45, second=34)),
+        ("01:45:34", timedelta(hours=1, minutes=45, seconds=34)),
+        ("45:34", timedelta(hours=0, minutes=45, seconds=34)),
+        ("32:45:34", timedelta(hours=32, minutes=45, seconds=34)),
         ("ad:34", None),
     ]
 )
-def test_parse_time(text: str, expected: Optional[time]):
+def test_parse_time(text: str, expected: Optional[timedelta]):
     t = utils.parse_time(text)
     assert t == expected, f"Unexpected result={t}, when {expected} was expected"
 

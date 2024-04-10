@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, timedelta
 from typing import Optional
 
 import pytest
@@ -96,7 +96,7 @@ def test_CompetitionRow(
                     birth_year=1975,
                     gender=models.Gender.male,
                 ),
-                time=time(hour=0, minute=35, second=1),
+                time=timedelta(minutes=35, seconds=1),
                 rank=models.Rank(
                     scratch=1,
                     gender=1,
@@ -130,7 +130,7 @@ def test_CompetitionRow(
                     last_name="NOEL",
                     gender=models.Gender.male,
                 ),
-                time=time(hour=0, minute=35, second=1),
+                time=timedelta(hours=0, minutes=35, seconds=1),
                 rank=models.Rank(
                     scratch=1,
                     gender=1,

@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 import pytest
 
 from ...context import scrapers
+from scrapers.sportpro import SportproScraper
 
 curr_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -46,7 +47,7 @@ def mock_http_client():
 @patch("scrapers.sportpro.main.limiter.__aexit__", AsyncMock())
 @pytest.mark.asyncio
 async def test_SportproScraper_scrap():
-    scraper = scrapers.SportproScraper()
+    scraper = SportproScraper()
     competitions = list([c async for c in scraper.scrap()])
     assert len(competitions) == 2, f"errors={scraper._errors}"
     assert len(scraper._errors) == 2
