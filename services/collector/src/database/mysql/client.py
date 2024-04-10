@@ -37,7 +37,8 @@ class MySQLClient(Database):
         async with self._engine.begin() as conn:
             logger.info(
                 f"About to create (if not exist) tables {orm.Runner.__tablename__}, "
-                f"{orm.Competition.__tablename__}, {orm.Result.__tablename__}")
+                f"{orm.Competition.__tablename__}, {orm.Result.__tablename__}, "
+                f"{orm.CompetitionEvent.__tablename__}")
             await conn.run_sync(orm.Base.metadata.create_all)
 
     @classmethod
@@ -157,8 +158,8 @@ class MySQLClient(Database):
         Get runner id from the DB
         """
         stmt = select(orm.Runner.id).where(
-            orm.Runner.first_name == fname and
-            orm.Runner.last_name == lname and
+            orm.Runner.first_name == fname,
+            orm.Runner.last_name == lname,
             orm.Runner.birth_year == birth_year
         )
         async with self.__db_session() as session:
