@@ -5,11 +5,9 @@ from database import Database
 
 
 class BackgroundController:
-    def __init__(self, db: Database):
+    def __init__(self):
         # number of running coroutines in background
         self._n = 0
-
-        self._db = db
 
     @property
     def number_background_tasks(self) -> int:

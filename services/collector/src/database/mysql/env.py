@@ -20,7 +20,7 @@ class Environments:
     def parse(cls):
         load_dotenv()
         address = os.getenv("MYSQL_ADDRESS")
-        host, port = address.split(":") if ":" in address else address, "0"
+        host, port = address.split(":") if ":" in address else (address, "0")
         return cls(
             user=os.getenv("MYSQL_USERNAME"),
             password=os.getenv("MYSQL_PASSWORD"),

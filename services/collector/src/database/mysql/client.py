@@ -55,7 +55,7 @@ class MySQLClient(Database):
 
     @classmethod
     @asynccontextmanager
-    async def session(cls):
+    async def client(cls):
         self = await cls.create()
         try:
             yield self

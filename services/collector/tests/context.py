@@ -10,3 +10,4 @@ sys.path.insert(0, os.path.abspath(os.path.join(
 # import packages
 import scrapers
 import models
+import database

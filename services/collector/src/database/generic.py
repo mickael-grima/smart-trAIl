@@ -16,5 +16,5 @@ class Database(abc.ABC):
 
     @classmethod
     @asynccontextmanager
-    async def session(cls):
+    async def client(cls):
         yield cls()

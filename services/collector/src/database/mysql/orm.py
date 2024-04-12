@@ -1,10 +1,15 @@
-from datetime import time, date
+import datetime
+import logging
+from datetime import date, timedelta
 
 from sqlalchemy import ForeignKey, UniqueConstraint, String, Date, Time, PrimaryKeyConstraint
 from sqlalchemy.dialects.mysql import SMALLINT, CHAR, INTEGER, YEAR
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column
 
 import models
+from . import utils
+
+logger = logging.getLogger(__name__)
 
 Base = declarative_base()
 
@@ -60,7 +65,7 @@ class Result(Base):
     event_id: Mapped[int] = mapped_column(ForeignKey("competitionEvents.id"), nullable=False)
 
     status: Mapped[str] = mapped_column(String(20), nullable=False)
-    time: Mapped[time] = mapped_column(Time, nullable=True)
+    time: Mapped[timedelta] = mapped_column(Time, nullable=True)
     license: Mapped[str] = mapped_column(String(255), nullable=True)
     category: Mapped[str] = mapped_column(String(20), nullable=True)
 
@@ -84,7 +89,7 @@ class Result(Base):
             runner_id=runner_id,
             event_id=event_id,
             status=result.status.value,
-            time=result.time.strftime("%H:%M:%S") if result.time else None,
+            time=utils.format_timedelta(result.time) if result.time else None,
             license=result.license if result.license else None,
             category=result.category,
             scratch_ranking=result.rank.scratch if result.rank else None,
@@ -108,9 +113,13 @@ class Runner(Base):
 
     @classmethod
     def from_model(cls, runner: models.Runner) -> dict:
+        current_year = datetime.datetime.now().year
         birth_year = runner.birth_year
         # year before 1901 are not accepted (and not relevant anyway)
-        if birth_year is not None and birth_year < 1901:
+        if birth_year is not None and  not 1901 <= birth_year <= current_year:
+            logger.warning(
+                f"not valid BirthYear={birth_year} for "
+                f"runner=\"{runner.first_name} {runner.last_name}\"")
             birth_year = None
         return dict(
             first_name=runner.first_name,
