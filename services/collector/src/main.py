@@ -29,3 +29,7 @@ async def run():
             run_single(scraper, db)
             for scraper in discover_scrapers()
         ])
+
+
+if __name__ == '__main__':
+    asyncio.run(run())
