@@ -12,7 +12,7 @@ RUN pip install -r requirements.txt
 RUN rm -f requirements.txt
 
 # add source code
-COPY src/** .
+COPY src/ .
 
 # run application
 CMD ["python", "main.py"]

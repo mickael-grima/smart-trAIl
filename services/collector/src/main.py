@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import time
 
 from scrapers import discover as discover_scrapers, Scraper
 from database import client as db_client, Database
