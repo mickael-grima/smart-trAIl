@@ -1,0 +1,11 @@
+# Ignore db env -- this should be provided as ENV variables directly
+.env
+
+# testing files and dirs
+htmlcov
+.tox
+.coverage
+.coveragerc
+tests/
+tox.ini
+.pytest_cache
