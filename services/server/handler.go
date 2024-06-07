@@ -3,7 +3,9 @@ package main
 import (
     "net/http"
     "encoding/json"
+    "strconv"
 
+    "github.com/gorilla/mux"
     log "github.com/sirupsen/logrus"
 
     "github.com/trail-running/server/database"
@@ -12,14 +14,8 @@ import (
 var db database.DBClient
 
 func searchRunners(w http.ResponseWriter, r *http.Request) {
-    // check query params
-    q := r.URL.Query()
-    if q.Get("q") == "" {
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
-
     // get runners from the database
+    q := r.URL.Query()
     runners, err := db.SearchRunners(q.Get("q"))
     if err != nil {
         log.Error(err)
@@ -32,15 +28,12 @@ func searchRunners(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRunner(w http.ResponseWriter, r *http.Request) {
-    // check query params
-    q := r.URL.Query()
-    if q.Get("id") == "" {
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
+    // Get id as an integer
+    vars := mux.Vars(r)
+    id, _ := strconv.Atoi(vars["id"])  // can't result in an error since the router make sure it is an integer
 
     // get runners from the database
-    runner, err := db.GetRunner(q.Get("id"))
+    runner, err := db.GetRunner(id)
     if err != nil {
         log.Error(err)
         w.WriteHeader(http.StatusInternalServerError)
@@ -52,15 +45,12 @@ func getRunner(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRunnerResults(w http.ResponseWriter, r *http.Request) {
-    // check query params
-    q := r.URL.Query()
-    if q.Get("id") == "" {
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
+    // Get id as an integer
+    vars := mux.Vars(r)
+    id, _ := strconv.Atoi(vars["id"])  // can't result in an error since the router make sure it is an integer
 
     // get results from the database
-    runner, err := db.GetRunnerResults(q.Get("id"))
+    runner, err := db.GetRunnerResults(id)
     if err != nil {
         log.Error(err)
         w.WriteHeader(http.StatusInternalServerError)
@@ -72,14 +62,8 @@ func getRunnerResults(w http.ResponseWriter, r *http.Request) {
 }
 
 func searchEvents(w http.ResponseWriter, r *http.Request) {
-    // check query params
-    q := r.URL.Query()
-    if q.Get("q") == "" {
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
-
     // get runners from the database
+    q := r.URL.Query()
     events, err := db.SearchEvents(q.Get("q"))
     if err != nil {
         log.Error(err)
@@ -92,15 +76,12 @@ func searchEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func getEvent(w http.ResponseWriter, r *http.Request) {
-    // check query params
-    q := r.URL.Query()
-    if q.Get("id") == "" {
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
+    // Get id as an integer
+    vars := mux.Vars(r)
+    id, _ := strconv.Atoi(vars["id"])  // can't result in an error since the router make sure it is an integer
 
     // get runners from the database
-    event, err := db.GetCompetitionEvent(q.Get("id"))
+    event, err := db.GetCompetitionEvent(id)
     if err != nil {
         log.Error(err)
         w.WriteHeader(http.StatusInternalServerError)
@@ -112,15 +93,12 @@ func getEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func getEventResults(w http.ResponseWriter, r *http.Request) {
-    // check query params
-    q := r.URL.Query()
-    if q.Get("id") == "" {
-        w.WriteHeader(http.StatusBadRequest)
-        return
-    }
+    // Get id as an integer
+    vars := mux.Vars(r)
+    id, _ := strconv.Atoi(vars["id"])  // can't result in an error since the router make sure it is an integer
 
     // get results from the database
-    event, err := db.GetCompetitionEventResults(q.Get("id"))
+    event, err := db.GetCompetitionEventResults(id)
     if err != nil {
         log.Error(err)
         w.WriteHeader(http.StatusInternalServerError)

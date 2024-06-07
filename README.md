@@ -55,7 +55,7 @@ We use a SQL database for this project. The tables are described as following:
 | category_ranking | smallint unsigned | YES  |     | NULL    |       |
 
 `runner_id` references `runners.id`  
-`event_id` references `competitionEvents.id`  
+`event_id` references `competitionEvents.id`
 
 ## Collector
 
@@ -103,3 +103,19 @@ MYSQL_DBNAME=
 ```commandline
 docker --env-file .env -t collector
 ```
+
+## Server
+
+The `server` service acts as an entrypoint for any client willing to get data from the database. It is built
+as a RESTFull API
+
+### Endpoints
+
+| Method | Path                    | Parameters            | Description                                                                                                             |
+|--------|-------------------------|-----------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `GET`  | `/runners/search`       | `q`: the search query | Returns all the runners matching the given query                                                                        |
+| `GET`  | `/runners/<id>`         | `id`: the runner's id | Returns the runner corresponding to the id. 404 is returned if None                                                     |
+| `GET`  | `/runners/<id>/results` | `id`: the runner's id | Returns the list of results of the runner corresponding to the id. 404 is returned if no runner corresponding to the id |
+| `GET`  | `/events/search`        | `q`: the search query | Returns all events corresponding to the search query                                                                    |
+| `GET`  | `/events/<id>`          | `id`: the event's id  | Return the event corresponding to the id. 404 is returned if no event                                                   |
+| `GET`  | `/events/<id>/results`  | `id`: the event's id  | Returns the list of results of the event corresponding to the id. 404 is returned if no event corresponding to the id   |
