@@ -57,16 +57,15 @@ func (client *MySQLDBClient) GetRunner(id int) (*Runner, error) {
 
 // GetRunnerResults fetches the results corresponding to `runner` as a one to many
 // relationship
-func (client *MySQLDBClient) GetRunnerResults(id int) (*Runner, error) {
-    var runner Runner
-    result := client.db.Preload("Results").First(&runner, id)
-    if result.Error == nil {
-        return &runner, nil
+func (client *MySQLDBClient) GetRunnerResults(runnerID int) ([]*Result, error) {
+    var results []*Result
+    err := client.db.Find(&results, "runner_id = ?", runnerID).Error
+    if err != nil {
+        return nil, fmt.Errorf(
+            "error finding results for runner-id=%d. Reason: %w",
+            runnerID, err)
     }
-    if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-        return nil, nil
-    }
-    return nil, fmt.Errorf("error querying database. Reason: %w", result.Error)
+    return results, nil
 }
 
 // SearchCompetitions correspond whose name corresponds has `text` as substring
@@ -95,10 +94,15 @@ func (client *MySQLDBClient) SearchEvents(text string) ([]CompetitionEvent, erro
 
 // GetCompetition retrieves the competition event corresponding `id`
 func (client *MySQLDBClient) GetCompetitionEvent(id int) (*CompetitionEvent, error) {
-    var event CompetitionEvent
-    result := client.db.Preload("Competitions").First(&event, id)
+    var competition Competition
+    result := client.db.Preload("CompetitionEvents", "id = ?", id).First(&competition)
     if result.Error == nil {
-        return &event, nil
+        if len(competition.CompetitionEvents) > 0 {
+            event := competition.CompetitionEvents[0]
+            event.Competition = competition
+            return event, nil
+        }
+        return nil, nil  // Result not found
     }
     if errors.Is(result.Error, gorm.ErrRecordNotFound) {
         return nil, nil
@@ -106,15 +110,55 @@ func (client *MySQLDBClient) GetCompetitionEvent(id int) (*CompetitionEvent, err
     return nil, fmt.Errorf("error querying database. Reason: %w", result.Error)
 }
 
-// GetCompetitionResults
-func (client *MySQLDBClient) GetCompetitionEventResults(id int) (*CompetitionEvent, error) {
-    event := &CompetitionEvent{ID: id}
-    result := client.db.Preload("Results").First(&event, id)
-    if result.Error == nil {
-        return event, nil
+func (client *MySQLDBClient) GetCompetitionEventResults(eventID int) ([]*RunnerResult, error) {
+    // fetch first results
+    var results []*Result
+    err := client.db.Find(&results, "event_id = ?", eventID).Error
+    if err != nil {
+        return nil, fmt.Errorf(
+            "error finding results for event-id=%d. Reason: %w",
+            eventID, err)
     }
-    if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+
+    if len(results) == 0 {  // no need to continue if no results
         return nil, nil
     }
-    return nil, fmt.Errorf("error querying database. Reason: %w", result.Error)
+
+    // fetch then runners
+    var runnerIDs []int
+    for _, result := range results {
+        runnerIDs = append(runnerIDs, result.RunnerID)
+    }
+    var runners []*Runner
+    err = client.db.Find(&runners, "id IN ?", runnerIDs).Error
+    if err != nil {
+        return nil, fmt.Errorf(
+            "error finding runners for event-id=%d. Reason: %w",
+            eventID, err)
+    }
+
+    // no runners: return nothing
+    if len(runners) == 0 {
+        return nil, nil
+    }
+
+    // all together
+    runnerResultMapping := make(map[int]*RunnerResult, 0)
+    for _, result := range results {
+        runnerResultMapping[result.RunnerID] = &RunnerResult{ Result: *result }
+    }
+    for _, runner := range runners {
+        _, exists := runnerResultMapping[runner.ID]
+        if exists {
+            runnerResultMapping[runner.ID].Runner = *runner
+        }
+    }
+
+    // transform to list
+    var runnerResults []*RunnerResult
+    for _, res := range runnerResultMapping {
+        runnerResults = append(runnerResults, res)
+    }
+
+    return runnerResults, nil
 }

@@ -22,19 +22,19 @@ type Competition struct {
 }
 
 type CompetitionEvent struct {
-    ID            int          `json:"id"`
-    CompetitionID int          `json:"-"`
-    Name          string       `gorm:"not null,varchar(255)" json:"name"`
-    Distance      uint         `gorm:"not null,smallint,unsigned" json:"distance"`
-    StartDate     time.Time    `gorm:"not null" json:"start_date"`
-    EndDate       sql.NullTime `json:"end_date,omitempty"`
-    Competition   Competition  `gorm:"foreignKey:CompetitionID" json:"competition"`
-    Runners       []*Runner    `gorm:"many2many:runners" json:"runners,omitempty"`
+    ID            int             `json:"id"`
+    CompetitionID int             `json:"-"`
+    Name          string          `gorm:"not null,varchar(255)" json:"name"`
+    Distance      uint            `gorm:"not null,smallint,unsigned" json:"distance"`
+    StartDate     time.Time       `gorm:"not null" json:"start_date"`
+    EndDate       sql.NullTime    `json:"end_date,omitempty"`
+    Competition   Competition     `gorm:"foreignKey:CompetitionID" json:"competition"`
+    Results       []*RunnerResult `gorm:"foreignKey:EventID" json:"runners,omitempty"`
 }
 
 type Result struct {
     RunnerID           int            `json:"-"`
-    CompetitionEventID int            `json:"-"`
+    EventID            int            `gorm:"" json:"-"`
     Status             string         `gorm:"not null,varchar(20)" json:"status"`
     Time               sql.NullTime   `json:"time,omitempty"`
     License            sql.NullString `gorm:"varchar(255)" json:"license,omitempty"`
@@ -42,4 +42,9 @@ type Result struct {
     ScratchRanking     sql.NullInt32  `gorm:"smallint,unsigned" json:"scratch_ranking,omitempty"`
     GenderRanking      sql.NullInt32  `gorm:"smallint,unsigned" json:"gender_ranking,omitempty"`
     CategoryRanking    sql.NullInt32  `gorm:"smallint,unsigned" json:"category_ranking,omitempty"`
+}
+
+type RunnerResult struct {
+    Result
+    Runner
 }

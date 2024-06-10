@@ -34,8 +34,6 @@ func newMockDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
     return gormDB, mock
 }
 
-func TestInitDb(t *testing.T) {}
-
 // ----------------------------------------------------------------------------
 // ----------------------------- Test SearchRunners ---------------------------
 // ----------------------------------------------------------------------------
@@ -175,35 +173,23 @@ func TestMySQLDBClient_GetRunnerResults_withRunnerExpected(t *testing.T) {
 
     time_, _ := time.Parse(time.TimeOnly, "15:04:05")
 
-    // 1 runner expected
-    userRows := sqlmock.NewRows([]string{"id", "first_name", "last_name", "gender"})
-    userRows.AddRow(13, "John", "Doe", "M")
-    query := "^SELECT (.+) FROM `runners` WHERE `runners`.`id` = [?]{1} ORDER BY `runners`.`id` LIMIT [?]{1}$"
-    mock.ExpectQuery(query).WithArgs(13, 1).WillReturnRows(userRows)
-
     // 2 results expected
     resultsRows := sqlmock.NewRows([]string{"status", "time", "runner_id"})
     resultsRows.AddRow("finished", sql.NullTime{Time: time_, Valid: true}, 13)
     resultsRows.AddRow("abandoned", sql.NullTime{Valid: false}, 13)
-    query = "^SELECT (.*) FROM `results` WHERE `results`.`runner_id` = [?]{1}$"
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE runner_id = \?$`
     mock.ExpectQuery(query).WithArgs(13).WillReturnRows(resultsRows)
 
-    runner, err := client.GetRunnerResults(13)
+    results, err := client.GetRunnerResults(13)
     if err != nil {
         t.Fatalf("Error: %v", err)
     }
-    expected := &Runner{
-        ID: 13,
-        FirstName: "John",
-        LastName: "Doe",
-        Gender: "M",
-        Results: []*Result{
-            {Status: "finished", Time: sql.NullTime{Time: time_, Valid: true}, RunnerID: 13},
-            {Status: "abandoned", Time: sql.NullTime{Valid: false}, RunnerID: 13},
-        },
+    expected := []*Result{
+        {Status: "finished", Time: sql.NullTime{Time: time_, Valid: true}, RunnerID: 13},
+        {Status: "abandoned", Time: sql.NullTime{Valid: false}, RunnerID: 13},
     }
-    if !reflect.DeepEqual(runner, expected) {
-        t.Fatalf("Unexpected runner=%v when %v was expected.", runner, expected)
+    if !reflect.DeepEqual(results, expected) {
+        t.Fatalf("Unexpected results=%v when %v was expected.", results, expected)
     }
 }
 
@@ -212,17 +198,18 @@ func TestMySQLDBClient_GetRunnerResults_withNoRunnerExpected(t *testing.T) {
     client := MySQLDBClient{ db: db }
     defer client.Close()
 
-    // No runners expected
-    rows := sqlmock.NewRows([]string{"id", "first_name", "last_name", "gender"})
-    query := "^SELECT (.+) FROM `runners` WHERE `runners`.`id` = (.+)$"
-    mock.ExpectQuery(query).WillReturnRows(rows)
+    // 0 results expected
+    resultsRows := sqlmock.NewRows([]string{"status", "time", "runner_id"})
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE runner_id = \?$`
+    mock.ExpectQuery(query).WithArgs(13).WillReturnRows(resultsRows)
 
-    runner, err := client.GetRunnerResults(13)
+    results, err := client.GetRunnerResults(13)
     if err != nil {
         t.Fatalf("Error: %v", err)
     }
-    if runner != nil {
-        t.Fatalf("Unexpected runner=%v when nil was expected", runner)
+    expected := []*Result{}
+    if !reflect.DeepEqual(results, expected) {
+        t.Fatalf("Unexpected results=%v when nil was expected", results)
     }
 }
 
@@ -232,7 +219,7 @@ func TestMySQLDBClient_GetRunnerResults_error(t *testing.T) {
     defer client.Close()
 
     // Error from the DB
-    mock.ExpectQuery("^SELECT (.+) FROM `runners` WHERE `runners`.`id` = (.+)$").
+    mock.ExpectQuery(`^SELECT (.*) FROM \x60results\x60 WHERE runner_id = \?$`).
         WillReturnError(fmt.Errorf("ERROR"))
 
     _, err := client.GetRunnerResults(13)
@@ -321,10 +308,251 @@ func TestMySQLDBClient_SearchEvents_error(t *testing.T) {
 // ---------------------------- GetCompetitionEvent ---------------------------
 // ----------------------------------------------------------------------------
 
-func TestMySQLDBClient_GetCompetitionEvent(t *testing.T) {}
+func TestMySQLDBClient_GetCompetitionEvent_withEventExpected(t *testing.T) {
+    db, mock := newMockDB(t)
+    client := MySQLDBClient{ db: db }
+    defer client.Close()
+
+    time_, _ := time.Parse(time.DateOnly, "2024-06-07")
+
+    // 1 competition expected
+    competitionRows := sqlmock.NewRows([]string{"id", "name", "timekeeper"})
+    competitionRows.AddRow(11, "compet", "keeper")
+    query := "^SELECT (.+) FROM `competitions`"
+    mock.ExpectQuery(query).WillReturnRows(competitionRows)
+
+    // 2 events expected
+    competitionEventsRows := sqlmock.NewRows([]string{"id", "name", "distance", "start_date", "competition_id"})
+    competitionEventsRows.AddRow(111, "Race 1", 32, time_, 11)
+    query = "^SELECT (.+) FROM `competition_events` WHERE `competition_events`.`competition_id` = [?]{1} AND id = [?]{1}$"
+    mock.ExpectQuery(query).WithArgs(11, 111).WillReturnRows(competitionEventsRows)
+
+    event, err := client.GetCompetitionEvent(111)
+    if err != nil {
+        t.Fatalf("Error: %v", err)
+    }
+    competition := Competition{ID: 11, Name: "compet", Timekeeper: "keeper"}
+    expected := &CompetitionEvent{
+        ID: 111,
+        Name: "Race 1",
+        Distance: 32,
+        StartDate: time_,
+        CompetitionID: 11,
+        Competition: competition,
+    }
+    // ignore CompetitionEvents in event
+    event.Competition.CompetitionEvents = nil
+    if !reflect.DeepEqual(event, expected) {
+        t.Fatalf("Unexpected event=%v when %v was expected.", event, expected)
+    }
+}
+
+func TestMySQLDBClient_GetCompetitionEvent_withNoCompetitionExpected(t *testing.T) {
+    db, mock := newMockDB(t)
+    client := MySQLDBClient{ db: db }
+    defer client.Close()
+
+    // No runners expected
+    competitionRows := sqlmock.NewRows([]string{"id", "name", "timekeeper"})
+    query := "^SELECT (.+) FROM `competitions`"
+    mock.ExpectQuery(query).WillReturnRows(competitionRows)
+
+    event, err := client.GetCompetitionEvent(111)
+    if err != nil {
+        t.Fatalf("Error: %v", err)
+    }
+    if event != nil {
+        t.Fatalf("Unexpected event=%v when nil was expected", event)
+    }
+}
+
+func TestMySQLDBClient_GetCompetitionEvent_withNoCompetitionEventsExpected(t *testing.T) {
+    db, mock := newMockDB(t)
+    client := MySQLDBClient{ db: db }
+    defer client.Close()
+
+    // 1 competition expected
+    competitionRows := sqlmock.NewRows([]string{"id", "name", "timekeeper"})
+    competitionRows.AddRow(11, "compet", "keeper")
+    query := "^SELECT (.+) FROM `competitions`"
+    mock.ExpectQuery(query).WillReturnRows(competitionRows)
+
+    // 0 events expected
+    competitionEventsRows := sqlmock.NewRows([]string{"id", "name", "distance", "start_date", "competition_id"})
+    query = "^SELECT (.+) FROM `competition_events` WHERE `competition_events`.`competition_id` = [?]{1} AND id = [?]{1}$"
+    mock.ExpectQuery(query).WithArgs(11, 111).WillReturnRows(competitionEventsRows)
+
+    event, err := client.GetCompetitionEvent(111)
+    if err != nil {
+        t.Fatalf("Error: %v", err)
+    }
+    if event != nil {
+        t.Fatalf("Unexpected event=%v when nil was expected", event)
+    }
+}
+
+func TestMySQLDBClient_GetCompetitionEvent_error(t *testing.T) {
+    db, mock := newMockDB(t)
+    client := MySQLDBClient{ db: db }
+    defer client.Close()
+
+    // Error from the DB
+    mock.ExpectQuery("^SELECT (.+) FROM `competitions`").
+        WillReturnError(fmt.Errorf("ERROR"))
+
+    _, err := client.GetCompetitionEvent(111)
+    if err == nil {
+        t.Fatalf("Expecting error but got nothing")
+    }
+}
 
 // ----------------------------------------------------------------------------
-// ------------------------ GetCompetitionEventResults ------------------------
+// --------------------------- getResultsFromEventID --------------------------
 // ----------------------------------------------------------------------------
 
-func TestMySQLDBClient_GetCompetitionEventResults(t *testing.T) {}
+func TestMySQLDBClient_getResultsFromEventID_withData(t *testing.T) {
+    db, mock := newMockDB(t)
+    client := MySQLDBClient{ db: db }
+    defer client.Close()
+
+    time_, _ := time.Parse(time.DateOnly, "2024-06-07")
+
+    // 2 results expected
+    resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
+    resultsRows.AddRow("finished", sql.NullTime{Time: time_, Valid: true}, 111, 12345)
+    resultsRows.AddRow("abandoned", sql.NullTime{Valid: false}, 111, 23456)
+    query := "^SELECT (.*) FROM `results` WHERE event_id = [?]{1}$"
+    mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
+
+    // 2 runners expected
+    runnersRows := sqlmock.NewRows([]string{"id", "first_name", "last_name", "gender"})
+    runnersRows.AddRow(12345, "John", "Boe", "M")
+    runnersRows.AddRow(23456, "Alice", "Bob", "F")
+    query = `^SELECT (.*) FROM \x60runners\x60 WHERE id IN \(\?,\?\)$`
+    mock.ExpectQuery(query).WithArgs(12345, 23456).WillReturnRows(runnersRows)
+
+    results, err := client.GetCompetitionEventResults(111)
+    if err != nil {
+        t.Fatalf("Error: %v", err)
+    }
+
+    expected := []*RunnerResult{
+        {
+            Result: Result{
+                Status: "finished",
+                Time: sql.NullTime{Time: time_, Valid: true},
+                EventID: 111,
+                RunnerID: 12345,
+            },
+            Runner: Runner{
+                ID: 12345,
+                FirstName: "John",
+                LastName: "Boe",
+                Gender: "M",
+            },
+        },
+        {
+            Result: Result{
+                Status: "abandoned",
+                Time: sql.NullTime{Valid: false},
+                EventID: 111,
+                RunnerID: 23456,
+            },
+            Runner: Runner{
+                ID: 23456,
+                FirstName: "Alice",
+                LastName: "Bob",
+                Gender: "F",
+            },
+        },
+    }
+    if !reflect.DeepEqual(results, expected) {
+        t.Fatalf("Unexpected results=%v when %v was expected.", results, expected)
+    }
+}
+
+func TestMySQLDBClient_getResultsFromEventID_withNoResults(t *testing.T) {
+    db, mock := newMockDB(t)
+    client := MySQLDBClient{ db: db }
+    defer client.Close()
+
+    // 2 results expected
+    resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \?$`
+    mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
+
+    results, err := client.GetCompetitionEventResults(111)
+    if err != nil {
+        t.Fatalf("Error: %v", err)
+    }
+    if results != nil {
+        t.Fatalf("Unexpected results=%v when nil was expected.", results)
+    }
+}
+
+func TestMySQLDBClient_getResultsFromEventID_withNoRunners(t *testing.T) {
+    db, mock := newMockDB(t)
+    client := MySQLDBClient{ db: db }
+    defer client.Close()
+
+    time_, _ := time.Parse(time.DateOnly, "2024-06-07")
+
+    // 2 results expected
+    resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
+    resultsRows.AddRow("finished", sql.NullTime{Time: time_, Valid: true}, 111, 12345)
+    resultsRows.AddRow("abandoned", sql.NullTime{Valid: false}, 111, 23456)
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \?$`
+    mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
+
+    // 2 runners expected
+    runnersRows := sqlmock.NewRows([]string{"id", "first_name", "last_name", "gender"})
+    query = `^SELECT (.*) FROM \x60runners\x60 WHERE id IN \(\?,\?\)$`
+    mock.ExpectQuery(query).WithArgs(12345, 23456).WillReturnRows(runnersRows)
+
+    results, err := client.GetCompetitionEventResults(111)
+    if err != nil {
+        t.Fatalf("Error: %v", err)
+    }
+    if results != nil {
+        t.Fatalf("Unexpected results=%v when nil was expected.", results)
+    }
+}
+
+func TestMySQLDBClient_getResultsFromEventID_withResultsFetchingError(t *testing.T) {
+    db, mock := newMockDB(t)
+    client := MySQLDBClient{ db: db }
+    defer client.Close()
+
+    // 2 results expected
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \?$`
+    mock.ExpectQuery(query).WithArgs(111).WillReturnError(fmt.Errorf("ERROR"))
+
+    _, err := client.GetCompetitionEventResults(111)
+    if err == nil {
+        t.Fatalf("Expecting error but got nothing")
+    }
+}
+
+func TestMySQLDBClient_getResultsFromEventID_withRunnersFetchingError(t *testing.T) {
+    db, mock := newMockDB(t)
+    client := MySQLDBClient{ db: db }
+    defer client.Close()
+
+    time_, _ := time.Parse(time.DateOnly, "2024-06-07")
+
+    // 2 results expected
+    resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
+    resultsRows.AddRow("finished", sql.NullTime{Time: time_, Valid: true}, 111, 12345)
+    resultsRows.AddRow("abandoned", sql.NullTime{Valid: false}, 111, 23456)
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \?$`
+    mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
+
+    // 2 runners expected
+    query = `^SELECT (.*) FROM \x60runners\x60 WHERE id IN \(\?,\?\)$`
+    mock.ExpectQuery(query).WithArgs(12345, 23456).WillReturnError(fmt.Errorf("ERROR"))
+
+    _, err := client.GetCompetitionEventResults(111)
+    if err == nil {
+        t.Fatalf("Expecting error but got nothing")
+    }
+}

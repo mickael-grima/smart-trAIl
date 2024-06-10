@@ -50,7 +50,7 @@ func getRunnerResults(w http.ResponseWriter, r *http.Request) {
     id, _ := strconv.Atoi(vars["id"])  // can't result in an error since the router make sure it is an integer
 
     // get results from the database
-    runner, err := db.GetRunnerResults(id)
+    results, err := db.GetRunnerResults(id)
     if err != nil {
         log.Error(err)
         w.WriteHeader(http.StatusInternalServerError)
@@ -58,7 +58,7 @@ func getRunnerResults(w http.ResponseWriter, r *http.Request) {
     }
 
     w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(runner)
+	json.NewEncoder(w).Encode(results)
 }
 
 func searchEvents(w http.ResponseWriter, r *http.Request) {
@@ -98,7 +98,7 @@ func getEventResults(w http.ResponseWriter, r *http.Request) {
     id, _ := strconv.Atoi(vars["id"])  // can't result in an error since the router make sure it is an integer
 
     // get results from the database
-    event, err := db.GetCompetitionEventResults(id)
+    results, err := db.GetCompetitionEventResults(id)
     if err != nil {
         log.Error(err)
         w.WriteHeader(http.StatusInternalServerError)
@@ -106,5 +106,5 @@ func getEventResults(w http.ResponseWriter, r *http.Request) {
     }
 
     w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(event)
+	json.NewEncoder(w).Encode(results)
 }
