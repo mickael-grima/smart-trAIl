@@ -171,12 +171,10 @@ func TestMySQLDBClient_GetRunnerResults_withRunnerExpected(t *testing.T) {
     client := MySQLDBClient{ db: db }
     defer client.Close()
 
-    time_, _ := time.Parse(time.TimeOnly, "15:04:05")
-
     // 2 results expected
     resultsRows := sqlmock.NewRows([]string{"status", "time", "runner_id"})
-    resultsRows.AddRow("finished", sql.NullTime{Time: time_, Valid: true}, 13)
-    resultsRows.AddRow("abandoned", sql.NullTime{Valid: false}, 13)
+    resultsRows.AddRow("finished", sql.NullString{String: "15:04:05", Valid: true}, 13)
+    resultsRows.AddRow("abandoned", sql.NullString{Valid: false}, 13)
     query := `^SELECT (.*) FROM \x60results\x60 WHERE runner_id = \?$`
     mock.ExpectQuery(query).WithArgs(13).WillReturnRows(resultsRows)
 
@@ -185,8 +183,8 @@ func TestMySQLDBClient_GetRunnerResults_withRunnerExpected(t *testing.T) {
         t.Fatalf("Error: %v", err)
     }
     expected := []*Result{
-        {Status: "finished", Time: sql.NullTime{Time: time_, Valid: true}, RunnerID: 13},
-        {Status: "abandoned", Time: sql.NullTime{Valid: false}, RunnerID: 13},
+        {Status: "finished", Time: sql.NullString{String: "15:04:05", Valid: true}, RunnerID: 13},
+        {Status: "abandoned", Time: sql.NullString{Valid: false}, RunnerID: 13},
     }
     if !reflect.DeepEqual(results, expected) {
         t.Fatalf("Unexpected results=%v when %v was expected.", results, expected)
@@ -415,12 +413,10 @@ func TestMySQLDBClient_getResultsFromEventID_withData(t *testing.T) {
     client := MySQLDBClient{ db: db }
     defer client.Close()
 
-    time_, _ := time.Parse(time.DateOnly, "2024-06-07")
-
     // 2 results expected
     resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
-    resultsRows.AddRow("finished", sql.NullTime{Time: time_, Valid: true}, 111, 12345)
-    resultsRows.AddRow("abandoned", sql.NullTime{Valid: false}, 111, 23456)
+    resultsRows.AddRow("finished", sql.NullString{String: "12:34:56", Valid: true}, 111, 12345)
+    resultsRows.AddRow("abandoned", sql.NullString{Valid: false}, 111, 23456)
     query := "^SELECT (.*) FROM `results` WHERE event_id = [?]{1}$"
     mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
 
@@ -440,7 +436,7 @@ func TestMySQLDBClient_getResultsFromEventID_withData(t *testing.T) {
         {
             Result: Result{
                 Status: "finished",
-                Time: sql.NullTime{Time: time_, Valid: true},
+                Time: sql.NullString{String: "12:34:56", Valid: true},
                 EventID: 111,
                 RunnerID: 12345,
             },
@@ -454,7 +450,7 @@ func TestMySQLDBClient_getResultsFromEventID_withData(t *testing.T) {
         {
             Result: Result{
                 Status: "abandoned",
-                Time: sql.NullTime{Valid: false},
+                Time: sql.NullString{Valid: false},
                 EventID: 111,
                 RunnerID: 23456,
             },
@@ -495,12 +491,10 @@ func TestMySQLDBClient_getResultsFromEventID_withNoRunners(t *testing.T) {
     client := MySQLDBClient{ db: db }
     defer client.Close()
 
-    time_, _ := time.Parse(time.DateOnly, "2024-06-07")
-
     // 2 results expected
     resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
-    resultsRows.AddRow("finished", sql.NullTime{Time: time_, Valid: true}, 111, 12345)
-    resultsRows.AddRow("abandoned", sql.NullTime{Valid: false}, 111, 23456)
+    resultsRows.AddRow("finished", sql.NullString{String: "12:34:56", Valid: true}, 111, 12345)
+    resultsRows.AddRow("abandoned", sql.NullString{Valid: false}, 111, 23456)
     query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \?$`
     mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
 
@@ -538,12 +532,10 @@ func TestMySQLDBClient_getResultsFromEventID_withRunnersFetchingError(t *testing
     client := MySQLDBClient{ db: db }
     defer client.Close()
 
-    time_, _ := time.Parse(time.DateOnly, "2024-06-07")
-
     // 2 results expected
     resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
-    resultsRows.AddRow("finished", sql.NullTime{Time: time_, Valid: true}, 111, 12345)
-    resultsRows.AddRow("abandoned", sql.NullTime{Valid: false}, 111, 23456)
+    resultsRows.AddRow("finished", sql.NullString{String: "12:34:56", Valid: true}, 111, 12345)
+    resultsRows.AddRow("abandoned", sql.NullString{Valid: false}, 111, 23456)
     query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \?$`
     mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
 
