@@ -1,0 +1,5 @@
+# Ignore db env -- this should be provided as ENV variables directly
+.env
+
+# ignore coverage results
+cover.*
