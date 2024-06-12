@@ -7,6 +7,7 @@ import (
     "errors"
 
     "github.com/gorilla/mux"
+    "github.com/gorilla/handlers"
     log "github.com/sirupsen/logrus"
 
     "github.com/trail-running/server/database"
@@ -40,7 +41,8 @@ func main() {
     defer closeOrLog(db)
 
     // start the server
-    err = http.ListenAndServe(":8080", router())
+    handler := handlers.LoggingHandler(os.Stdout, handlers.CompressHandler(router()))
+    err = http.ListenAndServe(":8080", handler)
     if errors.Is(err, http.ErrServerClosed) {
         log.Info("server closed\n")
     } else if err != nil {
