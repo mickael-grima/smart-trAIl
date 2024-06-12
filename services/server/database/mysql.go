@@ -3,9 +3,13 @@ package database
 import (
     "fmt"
     "errors"
+    "os"
+    "log"
+    "time"
 
     "gorm.io/driver/mysql"
     "gorm.io/gorm"
+    "gorm.io/gorm/logger"
 )
 
 type MySQLDBClient struct {
@@ -14,7 +18,19 @@ type MySQLDBClient struct {
 
 func InitDb() (*MySQLDBClient, error) {
     env := loadEnv()
-    db, err := gorm.Open(mysql.Open(env.dsn()), &gorm.Config{})
+    newLogger := logger.New(
+        log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+        logger.Config{
+            SlowThreshold:             time.Second, // Slow SQL threshold
+            LogLevel:                  logger.Info, // Log level
+            IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+            ParameterizedQueries:      false,       // Don't include params in the SQL log
+            Colorful:                  false,       // Disable color
+        },
+    )
+    db, err := gorm.Open(mysql.Open(env.dsn()), &gorm.Config{
+        Logger: newLogger,
+    })
     if err != nil {
         return nil, fmt.Errorf("error initializing a MySQL database. Reason: %w", err)
     }
@@ -94,20 +110,30 @@ func (client *MySQLDBClient) SearchEvents(text string) ([]CompetitionEvent, erro
 
 // GetCompetition retrieves the competition event corresponding `id`
 func (client *MySQLDBClient) GetCompetitionEvent(id int) (*CompetitionEvent, error) {
-    var competition Competition
-    result := client.db.Preload("CompetitionEvents", "id = ?", id).First(&competition)
-    if result.Error == nil {
-        if len(competition.CompetitionEvents) > 0 {
-            event := competition.CompetitionEvents[0]
-            event.Competition = competition
-            return event, nil
+    var event CompetitionEvent
+
+    // Get event first
+    result := client.db.First(&event, id)
+    if result.Error != nil {
+        if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+            return nil, nil
         }
-        return nil, nil  // Result not found
+        return nil, fmt.Errorf(
+            "error finding event with id=%d. Reason: %w",
+            id, result.Error)
     }
-    if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-        return nil, nil
+
+    result = client.db.First(&(event.Competition), event.CompetitionID)
+    if result.Error != nil {
+        if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+            return &event, nil
+        }
+        return nil, fmt.Errorf(
+            "error finding competition with id=%d. Reason: %w",
+            event.CompetitionID, result.Error)
     }
-    return nil, fmt.Errorf("error querying database. Reason: %w", result.Error)
+
+    return &event, nil
 }
 
 func (client *MySQLDBClient) GetCompetitionEventResults(eventID int) ([]*RunnerResult, error) {
