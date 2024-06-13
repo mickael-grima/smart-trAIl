@@ -10,7 +10,7 @@ type DBClient interface {
     // Runners related
     SearchRunners(text string) ([]Runner, error)
     GetRunner(id int) (*Runner, error)
-    GetRunnerResults(runnerID int) ([]*Result, error)
+    GetRunnerResults(runnerID int) ([]*CompetitionResult, error)
 
     // Runners related
     SearchEvents(text string) ([]CompetitionEvent, error)

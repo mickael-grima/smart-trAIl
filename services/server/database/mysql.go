@@ -6,6 +6,7 @@ import (
     "os"
     "log"
     "time"
+    "slices"
 
     "gorm.io/driver/mysql"
     "gorm.io/gorm"
@@ -71,17 +72,35 @@ func (client *MySQLDBClient) GetRunner(id int) (*Runner, error) {
     return nil, fmt.Errorf("error querying database. Reason: %w", result.Error)
 }
 
-// GetRunnerResults fetches the results corresponding to `runner` as a one to many
-// relationship
-func (client *MySQLDBClient) GetRunnerResults(runnerID int) ([]*Result, error) {
-    var results []*Result
-    err := client.db.Find(&results, "runner_id = ?", runnerID).Error
-    if err != nil {
-        return nil, fmt.Errorf(
-            "error finding results for runner-id=%d. Reason: %w",
-            runnerID, err)
+// Get results and competitions related to runnerID
+func (client *MySQLDBClient) GetRunnerResults(runnerID int) ([]*CompetitionResult, error) {
+    // fetch first results
+    results, err := client.getResultsFromRunnerID(runnerID)
+    if err != nil { return nil, err }
+    if len(results) == 0 { return nil, nil }  // no need to continue if no results
+
+    // fetch events
+    events, err := client.getEventsFromResults(results)
+    if err != nil { return nil, err }
+    if len(events) == 0 { return nil, nil }  // no need to continue if no events
+
+    // map event to its id
+    eventsMapping := map[int]*CompetitionEvent{}
+    for _, event := range events {
+        eventsMapping[event.ID] = event
     }
-    return results, nil
+
+    // all together
+    competitionResults := make([]*CompetitionResult, len(results))
+    for i, result := range results {
+        competitionResults[i] = &CompetitionResult{ Result: *result }
+        event, exists := eventsMapping[result.EventID]
+        if exists {
+            competitionResults[i].CompetitionEvent = *event
+        }
+    }
+
+    return competitionResults, nil
 }
 
 // SearchCompetitions correspond whose name corresponds has `text` as substring
@@ -138,6 +157,50 @@ func (client *MySQLDBClient) GetCompetitionEvent(id int) (*CompetitionEvent, err
 
 func (client *MySQLDBClient) GetCompetitionEventResults(eventID int) ([]*RunnerResult, error) {
     // fetch first results
+    results, err := client.getResultsFromEventID(eventID)
+    if err != nil { return nil, err }
+    if len(results) == 0 { return nil, nil }  // no need to continue if no results
+
+    // fetch then runners
+    runners, err := client.getRunnersFromResults(results)
+    if err != nil { return nil, err }
+    if len(runners) == 0 { return nil, nil }  // no runners: return nothing
+
+    // map runner to its id
+    runnersMapping := map[int]*Runner{}
+    for _, runner := range runners {
+        runnersMapping[runner.ID] = runner
+    }
+
+    // all together
+    runnerResults := make([]*RunnerResult, len(results))
+    for i, result := range results {
+        runnerResults[i] = &RunnerResult{ Result: *result }
+        runner, exists := runnersMapping[result.RunnerID]
+        if exists {
+            runnerResults[i].Runner = *runner
+        }
+    }
+
+    return runnerResults, nil
+}
+
+// ----------------------------------------------------------------------------
+// -------------------------- Secondary functions -----------------------------
+// ----------------------------------------------------------------------------
+
+func (client *MySQLDBClient) getResultsFromRunnerID(runnerID int) ([]*Result, error) {
+    var results []*Result
+    err := client.db.Find(&results, "runner_id = ?", runnerID).Error
+    if err != nil {
+        return nil, fmt.Errorf(
+            "error finding results for runer-id=%d. Reason: %w",
+            runnerID, err)
+    }
+    return results, nil
+}
+
+func (client *MySQLDBClient) getResultsFromEventID(eventID int) ([]*Result, error) {
     var results []*Result
     err := client.db.Find(&results, "event_id = ?", eventID).Error
     if err != nil {
@@ -145,46 +208,85 @@ func (client *MySQLDBClient) GetCompetitionEventResults(eventID int) ([]*RunnerR
             "error finding results for event-id=%d. Reason: %w",
             eventID, err)
     }
+    return results, nil
+}
 
-    if len(results) == 0 {  // no need to continue if no results
-        return nil, nil
-    }
-
-    // fetch then runners
+func (client *MySQLDBClient) getRunnersFromResults(results []*Result) ([]*Runner, error) {
+    // collect IDs first
     var runnerIDs []int
     for _, result := range results {
         runnerIDs = append(runnerIDs, result.RunnerID)
     }
+
+    // call the db
     var runners []*Runner
-    err = client.db.Find(&runners, "id IN ?", runnerIDs).Error
+    err := client.db.Find(&runners, "id IN ?", runnerIDs).Error
     if err != nil {
         return nil, fmt.Errorf(
-            "error finding runners for event-id=%d. Reason: %w",
-            eventID, err)
+            "error finding runners for ids=%d. Reason: %w",
+            runnerIDs, err)
     }
 
-    // no runners: return nothing
-    if len(runners) == 0 {
+    return runners, nil
+}
+
+func (client *MySQLDBClient) addCompetitionToEvents(events []*CompetitionEvent) error {
+    // collect competition ids
+    var competitionIDs []int
+    for _, event := range events {
+        if slices.Contains(competitionIDs, event.CompetitionID) {
+            continue
+        }
+        competitionIDs = append(competitionIDs, event.CompetitionID)
+    }
+
+    // call sql db
+    var competitions []*Competition
+    err := client.db.Find(&competitions, "id IN ?", competitionIDs).Error
+    if err != nil {
+        return fmt.Errorf(
+            "error finding competitions for ids=%d. Reason: %w",
+            competitionIDs, err)
+    }
+
+    // add competition to events
+    competitionsMapping := map[int]*Competition{}
+    for i, _ := range competitions {
+        competitionsMapping[competitions[i].ID] = competitions[i]
+    }
+    for i, _ := range events {
+        competition, exists := competitionsMapping[events[i].CompetitionID]
+        if !exists {
+            continue
+        }
+        events[i].Competition = *competition
+    }
+    return nil
+}
+
+func (client *MySQLDBClient) getEventsFromResults(results []*Result) ([]*CompetitionEvent, error) {
+    // collect event ids
+    var eventIDs []int
+    for _, result := range results {
+        eventIDs = append(eventIDs, result.EventID)
+    }
+
+    // call sql db
+    var events []*CompetitionEvent
+    err := client.db.Find(&events, "id IN ?", eventIDs).Error
+    if err != nil {
+        return nil, fmt.Errorf(
+            "error finding events for ids=%d. Reason: %w",
+            eventIDs, err)
+    }
+
+    // if no events, stop here
+    if len(events) == 0 {
         return nil, nil
     }
 
-    // all together
-    runnerResultMapping := make(map[int]*RunnerResult, 0)
-    for _, result := range results {
-        runnerResultMapping[result.RunnerID] = &RunnerResult{ Result: *result }
-    }
-    for _, runner := range runners {
-        _, exists := runnerResultMapping[runner.ID]
-        if exists {
-            runnerResultMapping[runner.ID].Runner = *runner
-        }
-    }
+    // add competition fetched from db
+    err = client.addCompetitionToEvents(events)
 
-    // transform to list
-    var runnerResults []*RunnerResult
-    for _, res := range runnerResultMapping {
-        runnerResults = append(runnerResults, res)
-    }
-
-    return runnerResults, nil
+    return events, nil
 }

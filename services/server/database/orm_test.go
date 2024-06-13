@@ -237,6 +237,90 @@ func TestMarshallJSON(t *testing.T) {
             },
             expected: []byte(`{"competition":{"id":11,"name":"compet","timekeeper":"keeper"},"distance":32,"end_date":"2024-06-08","id":111,"name":"event","results":[{"category":"SEH","first_name":"John","gender":"M","last_name":"Boe","license":"license","ranking":{"category":5,"gender":13,"scratch":13},"runner_id":12345,"status":"finished","time":"32:54:19"},{"category":"M1F","first_name":"Alice","gender":"F","last_name":"Bob","runner_id":23456,"status":"abandoned"}],"start_date":"2024-06-07"}`),
         },
+        {
+            name: "competitionresult-without-ranking",
+            data: &CompetitionResult{
+                Result: Result{
+                    Status: "abandoned",
+                    Category: sql.NullString{String: "M1H", Valid: true},
+                },
+                CompetitionEvent: CompetitionEvent{
+                    ID: 111,
+                    Name: "event",
+                    Distance: 32,
+                    StartDate: parseDate("2024-06-13"),
+                    EndDate: sql.NullTime{Time: parseDate("2024-06-13"), Valid: true},
+                    CompetitionID: 11,
+                    Competition: Competition{
+                        ID: 11,
+                        Name: "compet",
+                        Timekeeper: "keeper",
+                    },
+                    Results: []*RunnerResult{
+                        {
+                            Result: Result{
+                                Status: "abandoned",
+                                Category: sql.NullString{String: "M1H", Valid: true},
+                            },
+                            Runner: Runner{
+                                ID: 23456,
+                                FirstName: "Alice",
+                                LastName: "Bob",
+                                Gender: "F",
+                            },
+                        },
+                    },
+                },
+            },
+            expected: []byte(`{"category":"M1H","competition":{"id":11,"name":"compet","timekeeper":"keeper"},"distance":32,"end_date":"2024-06-13","event_id":111,"event_name":"event","start_date":"2024-06-13","status":"abandoned"}`),
+        },
+        {
+            name: "competitionresult-with-everything",
+            data: &CompetitionResult{
+                Result: Result{
+                    Status: "finished",
+                    Time: sql.NullString{String: "32:54:19", Valid: true},
+                    License: sql.NullString{String:"license", Valid: true},
+                    Category: sql.NullString{String:"SEH", Valid: true},
+                    ScratchRanking: sql.NullInt32{Int32: 13, Valid: true},
+                    GenderRanking: sql.NullInt32{Int32: 13, Valid: true},
+                    CategoryRanking: sql.NullInt32{Int32: 5, Valid: true},
+                },
+                CompetitionEvent: CompetitionEvent{
+                    ID: 111,
+                    Name: "event",
+                    Distance: 32,
+                    StartDate: parseDate("2024-06-13"),
+                    EndDate: sql.NullTime{Time: parseDate("2024-06-13"), Valid: true},
+                    CompetitionID: 11,
+                    Competition: Competition{
+                        ID: 11,
+                        Name: "compet",
+                        Timekeeper: "keeper",
+                    },
+                    Results: []*RunnerResult{
+                        {
+                            Result: Result{
+                                Status: "finished",
+                                Time: sql.NullString{String: "32:54:19", Valid: true},
+                                License: sql.NullString{String:"license", Valid: true},
+                                Category: sql.NullString{String:"SEH", Valid: true},
+                                ScratchRanking: sql.NullInt32{Int32: 13, Valid: true},
+                                GenderRanking: sql.NullInt32{Int32: 13, Valid: true},
+                                CategoryRanking: sql.NullInt32{Int32: 5, Valid: true},
+                            },
+                            Runner: Runner{
+                                ID: 12345,
+                                FirstName: "John",
+                                LastName: "Boe",
+                                Gender: "M",
+                            },
+                        },
+                    },
+                },
+            },
+            expected: []byte(`{"category":"SEH","competition":{"id":11,"name":"compet","timekeeper":"keeper"},"distance":32,"end_date":"2024-06-13","event_id":111,"event_name":"event","license":"license","ranking":{"category":5,"gender":13,"scratch":13},"start_date":"2024-06-13","status":"finished","time":"32:54:19"}`),
+        },
     }
 
     for _, testCase := range testCases {

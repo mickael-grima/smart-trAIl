@@ -53,7 +53,7 @@ type CompetitionEvent struct {
     Results       []*RunnerResult `gorm:"foreignKey:EventID" json:"runners,omitempty"`
 }
 
-func (e *CompetitionEvent) MarshalJSON() ([]byte, error) {
+func (e *CompetitionEvent) toMap() map[string]any {
     data := map[string]any{
         "id": e.ID,
         "name": e.Name,
@@ -69,7 +69,11 @@ func (e *CompetitionEvent) MarshalJSON() ([]byte, error) {
     if len(e.Results) > 0 {
         data["results"] = e.Results
     }
-	return json.Marshal(data)
+    return data
+}
+
+func (e *CompetitionEvent) MarshalJSON() ([]byte, error) {
+	return json.Marshal(e.toMap())
 }
 
 type Result struct {
@@ -138,5 +142,31 @@ func (r *RunnerResult) toMap() map[string]any {
 }
 
 func (r *RunnerResult) MarshalJSON() ([]byte, error) {
+	return json.Marshal(r.toMap())
+}
+
+type CompetitionResult struct {
+    Result
+    CompetitionEvent
+}
+
+func (r *CompetitionResult) toMap() map[string]any {
+    data := r.Result.toMap()
+    for key, value := range r.CompetitionEvent.toMap() {
+        switch key {
+        case "id":  // convert to event_id
+            data["event_id"] = value
+        case "name":  // convert to event_name
+            data["event_name"] = value
+        case "results":  // skip it
+            continue
+        default:
+            data[key] = value
+        }
+    }
+    return data
+}
+
+func (r *CompetitionResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.toMap())
 }

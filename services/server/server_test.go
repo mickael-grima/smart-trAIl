@@ -17,8 +17,8 @@ import (
 type MockDatabase struct {
     returnError bool  // If true, returns systematically an error
 
-    runners        map[int]database.Runner   // Map runners with their ids
-    runnersResults map[int][]database.Result // Map runner's results with runner's id
+    runners        map[int]database.Runner              // Map runners with their ids
+    runnersResults map[int][]database.CompetitionResult // Map runner's results with runner's id
 
     events        map[int]database.CompetitionEvent // Map events with their ids
     eventsResults map[int][]database.RunnerResult   // Map events' runners with event's id
@@ -50,11 +50,11 @@ func (db *MockDatabase) GetRunner(id int) (*database.Runner, error) {
     return nil, fmt.Errorf("No runner with id=%d", id)
 }
 
-func (db *MockDatabase) GetRunnerResults(runnerID int) ([]*database.Result, error) {
+func (db *MockDatabase) GetRunnerResults(runnerID int) ([]*database.CompetitionResult, error) {
     if db.returnError {
         return nil, fmt.Errorf("ERROR")
     }
-    results := make([]*database.Result, len(db.runnersResults[runnerID]))
+    results := make([]*database.CompetitionResult, len(db.runnersResults[runnerID]))
     for i, _ := range db.runnersResults[runnerID] {
         results = append(results, &(db.runnersResults[runnerID][i]))
     }
@@ -113,12 +113,18 @@ func mockDB(returnError bool) *MockDatabase {
                 Gender: "F",
             },
         },
-        runnersResults: map[int][]database.Result{
-            12345: []database.Result{
-                {Status: "finisher"},
-                {Status: "not started"},
+        runnersResults: map[int][]database.CompetitionResult{
+            12345: []database.CompetitionResult{
+                {
+                    Result: database.Result{Status: "finisher"},
+                    CompetitionEvent: database.CompetitionEvent{Name: "event"},
+                },
+                {
+                    Result: database.Result{Status: "not started"},
+                    CompetitionEvent: database.CompetitionEvent{Name: "event"},
+                },
             },
-            23456: []database.Result{},
+            23456: []database.CompetitionResult{},
         },
         events: map[int]database.CompetitionEvent{
             111: database.CompetitionEvent{
