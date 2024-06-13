@@ -73,6 +73,7 @@ func (client *MySQLDBClient) GetRunner(id int) (*Runner, error) {
 }
 
 // Get results and competitions related to runnerID
+// The returned result are sorted by event's start date, descending
 func (client *MySQLDBClient) GetRunnerResults(runnerID int) ([]*CompetitionResult, error) {
     // fetch first results
     results, err := client.getResultsFromRunnerID(runnerID)
@@ -84,19 +85,24 @@ func (client *MySQLDBClient) GetRunnerResults(runnerID int) ([]*CompetitionResul
     if err != nil { return nil, err }
     if len(events) == 0 { return nil, nil }  // no need to continue if no events
 
-    // map event to its id
-    eventsMapping := map[int]*CompetitionEvent{}
-    for _, event := range events {
-        eventsMapping[event.ID] = event
+    // map results to event
+    resultsEventMapping := map[int][]*Result{}
+    for _, result := range results {
+        _, exists := resultsEventMapping[result.EventID]
+        if !exists {
+            resultsEventMapping[result.EventID] = make([]*Result, 0)
+        }
+        resultsEventMapping[result.EventID] = append(resultsEventMapping[result.EventID], result)
     }
 
-    // all together
-    competitionResults := make([]*CompetitionResult, len(results))
-    for i, result := range results {
-        competitionResults[i] = &CompetitionResult{ Result: *result }
-        event, exists := eventsMapping[result.EventID]
-        if exists {
-            competitionResults[i].CompetitionEvent = *event
+    // create the CompetitionResult list keeping the events order
+    competitionResults := []*CompetitionResult{}
+    for _, event := range events {
+        for _, result := range resultsEventMapping[event.ID] {
+            competitionResults = append(competitionResults, &CompetitionResult{
+                Result: *result,
+                CompetitionEvent: *event,
+            })
         }
     }
 
@@ -108,8 +114,13 @@ func (client *MySQLDBClient) SearchEvents(text string) ([]CompetitionEvent, erro
     var competitions []Competition
     match := fmt.Sprintf("%%%s%%", text)
     err := client.db.
-        Preload("CompetitionEvents", "name LIKE ?", match).
+        Preload("CompetitionEvents", func(db *gorm.DB) *gorm.DB {
+            return db.Where("name LIKE ?", match).Order("start_date DESC")
+        }).
         Find(&competitions, "name LIKE ?", match).Error
+//     err := client.db.
+//         Preload("CompetitionEvents", "name LIKE ?", match).
+//         Find(&competitions, "name LIKE ?", match).Error
     if err != nil {
         return nil, fmt.Errorf(
             "error finding competitions or competition events with name like '%s'. Reason: %w",
@@ -202,7 +213,7 @@ func (client *MySQLDBClient) getResultsFromRunnerID(runnerID int) ([]*Result, er
 
 func (client *MySQLDBClient) getResultsFromEventID(eventID int) ([]*Result, error) {
     var results []*Result
-    err := client.db.Find(&results, "event_id = ?", eventID).Error
+    err := client.db.Order("scratch_ranking ASC").Find(&results, "event_id = ?", eventID).Error
     if err != nil {
         return nil, fmt.Errorf(
             "error finding results for event-id=%d. Reason: %w",
@@ -273,7 +284,7 @@ func (client *MySQLDBClient) getEventsFromResults(results []*Result) ([]*Competi
 
     // call sql db
     var events []*CompetitionEvent
-    err := client.db.Find(&events, "id IN ?", eventIDs).Error
+    err := client.db.Order("start_date DESC").Find(&events, "id IN ?", eventIDs).Error
     if err != nil {
         return nil, fmt.Errorf(
             "error finding events for ids=%d. Reason: %w",

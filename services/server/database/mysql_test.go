@@ -191,7 +191,7 @@ func TestMySQLDBClient_GetRunnerResults_withRunnerExpected(t *testing.T) {
     eventsRows := sqlmock.NewRows([]string{"id", "name", "distance", "competition_id"})
     eventsRows.AddRow(111, "event1", 32, 11)
     eventsRows.AddRow(112, "event2", 64, 11)
-    query = `^SELECT (.*) FROM \x60competition_events\x60 WHERE id IN \(\?,\?\)$`
+    query = `^SELECT (.*) FROM \x60competition_events\x60 WHERE id IN \(\?,\?\) ORDER BY start_date DESC$`
     mock.ExpectQuery(query).WithArgs(111, 112).WillReturnRows(eventsRows)
 
     // 1 competition expected
@@ -281,7 +281,7 @@ func TestMySQLDBClient_GetRunnerResults_withNoEventsExpected(t *testing.T) {
 
     // 0 events expected
     eventsRows := sqlmock.NewRows([]string{"id", "name", "distance", "competition_id"})
-    query = `^SELECT (.*) FROM \x60competition_events\x60 WHERE id IN \(\?,\?\)$`
+    query = `^SELECT (.*) FROM \x60competition_events\x60 WHERE id IN \(\?,\?\) ORDER BY start_date DESC$`
     mock.ExpectQuery(query).WithArgs(111, 112).WillReturnRows(eventsRows)
 
     results, err := client.GetRunnerResults(13)
@@ -309,7 +309,7 @@ func TestMySQLDBClient_GetRunnerResults_withNoCompetitionExpected(t *testing.T) 
     eventsRows := sqlmock.NewRows([]string{"id", "name", "distance", "competition_id"})
     eventsRows.AddRow(111, "event1", 32, 11)
     eventsRows.AddRow(112, "event2", 64, 11)
-    query = `^SELECT (.*) FROM \x60competition_events\x60 WHERE id IN \(\?,\?\)$`
+    query = `^SELECT (.*) FROM \x60competition_events\x60 WHERE id IN \(\?,\?\) ORDER BY start_date DESC$`
     mock.ExpectQuery(query).WithArgs(111, 112).WillReturnRows(eventsRows)
 
     // 1 competition expected
@@ -384,7 +384,7 @@ func TestMySQLDBClient_GetRunnerResults_errorForEvents(t *testing.T) {
     mock.ExpectQuery(query).WithArgs(13).WillReturnRows(resultsRows)
 
     // error events
-    query = `^SELECT (.*) FROM \x60competition_events\x60 WHERE id IN \(\?,\?\)$`
+    query = `^SELECT (.*) FROM \x60competition_events\x60 WHERE id IN \(\?,\?\) ORDER BY start_date DESC$`
     mock.ExpectQuery(query).WillReturnError(fmt.Errorf("ERROR"))
 
     _, err := client.GetRunnerResults(13)
@@ -409,7 +409,7 @@ func TestMySQLDBClient_GetRunnerResults_errorForCompetition(t *testing.T) {
     eventsRows := sqlmock.NewRows([]string{"id", "name", "distance", "competition_id"})
     eventsRows.AddRow(111, "event1", 32, 11)
     eventsRows.AddRow(112, "event2", 64, 11)
-    query = `^SELECT (.*) FROM \x60competition_events\x60 WHERE id IN \(\?,\?\)$`
+    query = `^SELECT (.*) FROM \x60competition_events\x60 WHERE id IN \(\?,\?\) ORDER BY start_date DESC$`
     mock.ExpectQuery(query).WithArgs(111, 112).WillReturnRows(eventsRows)
 
     // 1 competition expected
@@ -466,18 +466,20 @@ func TestMySQLDBClient_SearchEvents_withEventsExpected(t *testing.T) {
 
     time_, _ := time.Parse(time.DateOnly, "2024-06-07")
 
-    // 1 runner expected
+    // 1 competition expected
     competitionRows := sqlmock.NewRows([]string{"id", "name", "timekeeper"})
     competitionRows.AddRow(11, "compet", "keeper")
     query := "^SELECT (.+) FROM `competitions` WHERE name LIKE [?]{1}$"
     mock.ExpectQuery(query).WithArgs("%race%").WillReturnRows(competitionRows)
 
-    // 2 results expected
+    // 2 events expected
     competitionEventsRows := sqlmock.NewRows([]string{"id", "name", "distance", "start_date", "competition_id"})
     competitionEventsRows.AddRow(111, "Race 1", 32, time_, 11)
     competitionEventsRows.AddRow(112, "Race 2", 52, time_, 11)
-    query = "^SELECT (.+) FROM `competition_events` WHERE `competition_events`.`competition_id` = [?]{1} AND name LIKE [?]{1}$"
-    mock.ExpectQuery(query).WithArgs(11, "%race%").WillReturnRows(competitionEventsRows)
+    query = `^SELECT (.+) FROM \x60competition_events\x60
+    WHERE name LIKE \? AND \x60competition_events\x60.\x60competition_id\x60 = \?
+    ORDER BY start_date DESC$`
+    mock.ExpectQuery(query).WithArgs("%race%", 11).WillReturnRows(competitionEventsRows)
 
     events, err := client.SearchEvents("race")
     if err != nil {
@@ -678,7 +680,7 @@ func TestMySQLDBClient_getResultsFromEventID_withData(t *testing.T) {
     resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
     resultsRows.AddRow("finished", sql.NullString{String: "12:34:56", Valid: true}, 111, 12345)
     resultsRows.AddRow("abandoned", sql.NullString{Valid: false}, 111, 23456)
-    query := "^SELECT (.*) FROM `results` WHERE event_id = [?]{1}$"
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \? ORDER BY scratch_ranking ASC$`
     mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
 
     // 2 runners expected
@@ -735,7 +737,7 @@ func TestMySQLDBClient_getResultsFromEventID_withNoResults(t *testing.T) {
 
     // 2 results expected
     resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
-    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \?$`
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \? ORDER BY scratch_ranking ASC$`
     mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
 
     results, err := client.GetCompetitionEventResults(111)
@@ -756,7 +758,7 @@ func TestMySQLDBClient_getResultsFromEventID_withNoRunners(t *testing.T) {
     resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
     resultsRows.AddRow("finished", sql.NullString{String: "12:34:56", Valid: true}, 111, 12345)
     resultsRows.AddRow("abandoned", sql.NullString{Valid: false}, 111, 23456)
-    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \?$`
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \? ORDER BY scratch_ranking ASC$`
     mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
 
     // 2 runners expected
@@ -779,7 +781,7 @@ func TestMySQLDBClient_getResultsFromEventID_withResultsFetchingError(t *testing
     defer client.Close()
 
     // 2 results expected
-    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \?$`
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \? ORDER BY scratch_ranking ASC$`
     mock.ExpectQuery(query).WithArgs(111).WillReturnError(fmt.Errorf("ERROR"))
 
     _, err := client.GetCompetitionEventResults(111)
@@ -797,7 +799,7 @@ func TestMySQLDBClient_getResultsFromEventID_withRunnersFetchingError(t *testing
     resultsRows := sqlmock.NewRows([]string{"status", "time", "event_id", "runner_id"})
     resultsRows.AddRow("finished", sql.NullString{String: "12:34:56", Valid: true}, 111, 12345)
     resultsRows.AddRow("abandoned", sql.NullString{Valid: false}, 111, 23456)
-    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \?$`
+    query := `^SELECT (.*) FROM \x60results\x60 WHERE event_id = \? ORDER BY scratch_ranking ASC$`
     mock.ExpectQuery(query).WithArgs(111).WillReturnRows(resultsRows)
 
     // 2 runners expected
