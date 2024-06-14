@@ -17,20 +17,20 @@ import (
 type MockDatabase struct {
     returnError bool  // If true, returns systematically an error
 
-    runners        map[int]database.Runner              // Map runners with their ids
-    runnersResults map[int][]database.CompetitionResult // Map runner's results with runner's id
+    runners        map[int]*database.Runner              // Map runners with their ids
+    runnersResults map[int][]*database.CompetitionResult // Map runner's results with runner's id
 
-    events        map[int]database.CompetitionEvent // Map events with their ids
-    eventsResults map[int][]database.RunnerResult   // Map events' runners with event's id
+    events        map[int]*database.CompetitionEvent // Map events with their ids
+    eventsResults map[int][]*database.RunnerResult   // Map events' runners with event's id
 }
 
 func (db *MockDatabase) Close() error { return nil }
 
-func (db *MockDatabase) SearchRunners(text string) ([]database.Runner, error) {
+func (db *MockDatabase) SearchRunners(text string) ([]*database.Runner, error) {
     if db.returnError {
         return nil, fmt.Errorf("ERROR")
     }
-    runners := make([]database.Runner, 0)
+    runners := make([]*database.Runner, 0)
     for _, runner := range db.runners {
         if (strings.Contains(runner.FirstName, text) || strings.Contains(runner.LastName, text)) {
             runners = append(runners, runner)
@@ -45,7 +45,7 @@ func (db *MockDatabase) GetRunner(id int) (*database.Runner, error) {
     }
     runner, exists := db.runners[id]
     if exists {
-        return &runner, nil
+        return runner, nil
     }
     return nil, fmt.Errorf("No runner with id=%d", id)
 }
@@ -56,16 +56,16 @@ func (db *MockDatabase) GetRunnerResults(runnerID int) ([]*database.CompetitionR
     }
     results := make([]*database.CompetitionResult, len(db.runnersResults[runnerID]))
     for i, _ := range db.runnersResults[runnerID] {
-        results = append(results, &(db.runnersResults[runnerID][i]))
+        results = append(results, db.runnersResults[runnerID][i])
     }
     return results, nil
 }
 
-func (db *MockDatabase) SearchEvents(text string) ([]database.CompetitionEvent, error) {
+func (db *MockDatabase) SearchEvents(text string) ([]*database.CompetitionEvent, error) {
     if db.returnError {
         return nil, fmt.Errorf("ERROR")
     }
-    events := make([]database.CompetitionEvent, 0)
+    events := make([]*database.CompetitionEvent, 0)
     for _, event := range db.events {
         if (strings.Contains(event.Name, text)) {
             events = append(events, event)
@@ -80,7 +80,7 @@ func (db *MockDatabase) GetCompetitionEvent(id int) (*database.CompetitionEvent,
     }
     event, exists := db.events[id]
     if exists {
-        return &event, nil
+        return event, nil
     }
     return nil, fmt.Errorf("No event with id=%d", id)
 }
@@ -91,7 +91,7 @@ func (db *MockDatabase) GetCompetitionEventResults(eventID int) ([]*database.Run
     }
     results := make([]*database.RunnerResult, len(db.eventsResults[eventID]))
     for i, _ := range db.eventsResults[eventID] {
-        results = append(results, &(db.eventsResults[eventID][i]))
+        results = append(results, db.eventsResults[eventID][i])
     }
     return results, nil
 }
@@ -99,22 +99,22 @@ func (db *MockDatabase) GetCompetitionEventResults(eventID int) ([]*database.Run
 func mockDB(returnError bool) *MockDatabase {
     return &MockDatabase{
         returnError: returnError,
-        runners: map[int]database.Runner{
-            12345: database.Runner{
+        runners: map[int]*database.Runner{
+            12345: &database.Runner{
                 ID: 12345,
                 FirstName: "John",
                 LastName: "Boe",
                 Gender: "M",
             },
-            23456: database.Runner{
+            23456: &database.Runner{
                 ID: 23456,
                 FirstName: "Alice",
                 LastName: "Bob",
                 Gender: "F",
             },
         },
-        runnersResults: map[int][]database.CompetitionResult{
-            12345: []database.CompetitionResult{
+        runnersResults: map[int][]*database.CompetitionResult{
+            12345: []*database.CompetitionResult{
                 {
                     Result: database.Result{Status: "finisher"},
                     CompetitionEvent: database.CompetitionEvent{Name: "event"},
@@ -124,22 +124,22 @@ func mockDB(returnError bool) *MockDatabase {
                     CompetitionEvent: database.CompetitionEvent{Name: "event"},
                 },
             },
-            23456: []database.CompetitionResult{},
+            23456: []*database.CompetitionResult{},
         },
-        events: map[int]database.CompetitionEvent{
-            111: database.CompetitionEvent{
+        events: map[int]*database.CompetitionEvent{
+            111: &database.CompetitionEvent{
                 ID: 111,
                 Name: "run1",
                 Distance: 12,
             },
-            222: database.CompetitionEvent{
+            222: &database.CompetitionEvent{
                 ID: 222,
                 Name: "run2",
                 Distance: 36,
             },
         },
-        eventsResults: map[int][]database.RunnerResult{
-            111: []database.RunnerResult{
+        eventsResults: map[int][]*database.RunnerResult{
+            111: []*database.RunnerResult{
                 {
                     Result: database.Result{Status: "finisher"},
                     Runner: database.Runner{FirstName: "John", LastName: "Boe"},
@@ -149,7 +149,7 @@ func mockDB(returnError bool) *MockDatabase {
                     Runner: database.Runner{FirstName: "Alice", LastName: "Bob"},
                 },
             },
-            222: []database.RunnerResult{},
+            222: []*database.RunnerResult{},
         },
     }
 }
