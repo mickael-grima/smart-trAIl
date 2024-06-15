@@ -120,12 +120,22 @@ func (client *MySQLDBClient) SearchEvents(text string) ([]*CompetitionEvent, err
     competitions, err := client.getCompetitionsFromName(text)
     if err != nil { return nil, err }
 
+    // collect all events IDs to avoid dedup
+    eventsIDs := map[int]bool{}
+    for _, event := range events {
+        eventsIDs[event.ID] = true
+    }
+
     // collect and sort all events from fetched competitions
     eventsToAdd := []*CompetitionEvent{}
     for _, comp := range competitions {
         for _, event := range comp.CompetitionEvents {
+            if _, exists := eventsIDs[event.ID]; exists {  // skip if ID already exists
+                continue
+            }
             event.Competition = *comp
             eventsToAdd = append(eventsToAdd, event)
+            eventsIDs[event.ID] = true
         }
     }
     sort.Slice(eventsToAdd, func(i, j int) bool {

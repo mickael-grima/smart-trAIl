@@ -454,10 +454,11 @@ func TestMySQLDBClient_SearchEvents_withEventsExpected(t *testing.T) {
     query = `^SELECT (.+) FROM \x60competitions\x60 WHERE name LIKE \?$`
     mock.ExpectQuery(query).WithArgs("%race%").WillReturnRows(competitionRows)
 
-    // 2 events expected
+    // 3 events expected including 1 dedup
     competitionEventsRows = sqlmock.NewRows([]string{"id", "name", "distance", "start_date", "competition_id"})
     competitionEventsRows.AddRow(113, "Race 3", 64, time_.AddDate(0, 3, 0), 12)
     competitionEventsRows.AddRow(114, "Race 4", 84, time_.AddDate(0, 4, 0), 12)
+    competitionEventsRows.AddRow(111, "Race 1", 32, time_, 12)
     query = `^SELECT (.+) FROM \x60competition_events\x60
     WHERE \x60competition_events\x60.\x60competition_id\x60 = \?`
     mock.ExpectQuery(query).WithArgs(12).WillReturnRows(competitionEventsRows)
