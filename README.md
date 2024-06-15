@@ -55,7 +55,7 @@ We use a SQL database for this project. The tables are described as following:
 | category_ranking | smallint unsigned | YES  |     | NULL    |       |
 
 `runner_id` references `runners.id`  
-`event_id` references `competitionEvents.id`  
+`event_id` references `competitionEvents.id`
 
 ## Collector
 
@@ -102,4 +102,59 @@ MYSQL_DBNAME=
 
 ```commandline
 docker --env-file .env -t collector
+```
+
+## Server
+
+The `server` service acts as an entrypoint for any client willing to get data from the database. It is built
+as a RESTFull API
+
+### Endpoints
+
+| Method | Path                    | Parameters            | Description                                                                                                             |
+|--------|-------------------------|-----------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `GET`  | `/runners/search`       | `q`: the search query | Returns all the runners matching the given query                                                                        |
+| `GET`  | `/runners/<id>`         | `id`: the runner's id | Returns the runner corresponding to the id. 404 is returned if None                                                     |
+| `GET`  | `/runners/<id>/results` | `id`: the runner's id | Returns the list of results of the runner corresponding to the id. 404 is returned if no runner corresponding to the id |
+| `GET`  | `/events/search`        | `q`: the search query | Returns all events corresponding to the search query                                                                    |
+| `GET`  | `/events/<id>`          | `id`: the event's id  | Return the event corresponding to the id. 404 is returned if no event                                                   |
+| `GET`  | `/events/<id>/results`  | `id`: the event's id  | Returns the list of results of the event corresponding to the id. 404 is returned if no event corresponding to the id   |
+
+### How to test it?
+
+Under the `server/` folder, run:
+```bash
+go test ./... -v -coverprofile cover.out && go tool cover -html cover.out -o cover.html
+```
+
+This command will run all the existing test files, and create a coverage html file `cover.html`.
+Feel free to open this file in your preferred browser to see the coverage results.
+
+### How to run it?
+
+#### prerequisites
+
+1. This service is dockerize: we should install docker first.
+2. Make sure you have a MySQL DB running. If it runs on your local,
+   its address will be `host.docker.internal`. Otherwise use the one
+   wanted.
+3. Build the docker container:
+
+```commandline
+docker build -t server .
+```
+
+4. Create your environment file `.env`:
+
+```dotenv
+MYSQL_ADDRESS=
+MYSQL_USERNAME=
+MYSQL_PASSWORD=
+MYSQL_DBNAME=
+```
+
+5. Run the container:
+
+```commandline
+docker run --env-file .env -p 8080:8080 -t server
 ```
