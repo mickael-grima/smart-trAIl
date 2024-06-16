@@ -55,7 +55,7 @@ We use a SQL database for this project. The tables are described as following:
 | category_ranking | smallint unsigned | YES  |     | NULL    |       |
 
 `runner_id` references `runners.id`  
-`event_id` references `competitionEvents.id`
+`event_id` references `competition_events.id`
 
 ## Collector
 
