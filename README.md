@@ -101,7 +101,7 @@ MYSQL_DBNAME=
 5. Run the container:
 
 ```commandline
-docker --env-file .env -t collector
+docker run --env-file .env -t collector
 ```
 
 ## Server
