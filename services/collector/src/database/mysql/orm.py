@@ -33,7 +33,7 @@ class Competition(Base):
 
 
 class CompetitionEvent(Base):
-    __tablename__ = "competitionEvents"
+    __tablename__ = "competition_events"
 
     id: Mapped[int] = mapped_column(INTEGER, primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -62,7 +62,7 @@ class Result(Base):
 
     # ids
     runner_id: Mapped[int] = mapped_column(ForeignKey("runners.id"), nullable=False)
-    event_id: Mapped[int] = mapped_column(ForeignKey("competitionEvents.id"), nullable=False)
+    event_id: Mapped[int] = mapped_column(ForeignKey("competition_events.id"), nullable=False)
 
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     time: Mapped[timedelta] = mapped_column(Time, nullable=True)
