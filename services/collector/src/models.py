@@ -46,12 +46,18 @@ class Result(pydantic.BaseModel):
     category: str
 
 
-class Competition(pydantic.BaseModel):
-    name: str
+class CompetitionMetaData(pydantic.BaseModel):
     event: str
-    timekeeper: str
     date: Date
     distance: float
+    place: str | None = None
+    positive_elevation: float | None = None
+    negative_elevation: float | None = None
+
+
+class Competition(CompetitionMetaData):
+    name: str
+    timekeeper: str
     results: list[Result] = pydantic.Field(default_factory=list)
 
     def __hash__(self):
