@@ -1,8 +1,6 @@
 import asyncio
 from typing import Coroutine
 
-from database import Database
-
 
 class BackgroundController:
     def __init__(self):

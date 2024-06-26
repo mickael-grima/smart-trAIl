@@ -51,8 +51,8 @@ class CompetitionMetaData(pydantic.BaseModel):
     date: Date
     distance: float
     place: str | None = None
-    positive_elevation: float | None = None
-    negative_elevation: float | None = None
+    positive_elevation: int | None = None
+    negative_elevation: int | None = None
 
 
 class Competition(CompetitionMetaData):

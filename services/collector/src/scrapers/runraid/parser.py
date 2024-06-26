@@ -17,14 +17,15 @@ elevation_creg = re.compile(
 )
 
 
-def to_float(s: str, remove_points: bool = True) -> float:
+def to_float(s: str) -> float:
     """
     :param s: string to convert to float
-    :param remove_points: if true, remove points
     """
-    if remove_points:
-        s = s.replace(".", "")
     return float(s.replace(",", "."))
+
+
+def to_int(s: str):
+    return int(s.replace(".", ""))
 
 
 def convert_distance(d: str) -> float:
@@ -34,14 +35,14 @@ def convert_distance(d: str) -> float:
         case "marathon":
             return marathon_dist
         case _:
-            return to_float(d, remove_points=False)
+            return to_float(d)
 
 
 def parse_distance_and_elevation(
         dist: str,
         positive_elevation: str,
         negative_elevation: str
-) -> list[list[float, float | None, float | None, int | None]]:
+) -> list[list[float, int | None, int | None, int | None]]:
     """
     The website provides us often with several distance and elevations
     Sometimes it says what elevation for what distance, and gives also the year
@@ -81,21 +82,21 @@ def parse_distance_and_elevation(
         # add positive elevation
         if len(elevations) == len(results):  # each distance has an elevation
             for i, (el, _, _) in enumerate(elevations):
-                results[i][index] = to_float(el)
+                results[i][index] = to_int(el)
         elif len(elevations) == 1:
             el, d, year = elevations[0]
             if not d and not year:  # applies to all distances
                 for r in results:
-                    r[index] = to_float(el)
+                    r[index] = to_int(el)
             elif d:  # only one distance has an elevation
                 for r in results:
                     if r[0] == to_float(d):
-                        r[index] = to_float(el)
+                        r[index] = to_int(el)
                         break
             elif year:
                 for r in results:
-                    if r[-1] == to_float(year):
-                        r[index] = to_float(el)
+                    if r[-1] == to_int(year):
+                        r[index] = to_int(el)
                         break
         else:  # only the first distances have an elevation
             i = 0

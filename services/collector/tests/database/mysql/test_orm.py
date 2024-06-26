@@ -36,8 +36,16 @@ def test_Competition(competition: models.Competition, expected: dict):
                 timekeeper="sportpro",
                 date=models.Date(start=date(year=2024, month=4, day=10)),
                 distance=64,
+                positive_elevation=1050,
             ),
-            dict(competition_id=1, name="e", start_date="2024-04-10", distance=64),
+            dict(
+                competition_id=1,
+                name="e",
+                start_date="2024-04-10",
+                distance=64.0,
+                positive_elevation=1050,
+                negative_elevation=None,
+            ),
         )
     ]
 )

@@ -14,6 +14,16 @@ class Database(abc.ABC):
         - all the results
         """
 
+    @abc.abstractmethod
+    async def update_competition(
+            self,
+            comp_id: int,
+            competition: models.CompetitionMetaData
+    ):
+        """
+        Find & Update the corresponding competition
+        """
+
     @classmethod
     @asynccontextmanager
     async def client(cls):

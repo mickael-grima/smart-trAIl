@@ -168,3 +168,25 @@ async def test_MySQLClient_add_competition(mock_engine, mock_session):
     assert isinstance(statements[-2], Delete)
     # insert results
     assert isinstance(statements[-1], Insert)
+
+
+@pytest.mark.asyncio
+async def test_MySQLClient_update_competition(mock_engine, mock_session):
+    metadata = models.CompetitionMetaData(
+        event="whatever",
+        date=models.Date(start=date(year=2024, month=4, day=8)),
+        distance=24.,
+        positive_elevation=1050,
+        negative_elevation=None,
+    )
+
+    async with MySQLClient.client() as db:
+        await db.update_competition(1, metadata)
+
+    # check table creations
+    assert len(mock_engine.connections) == 1
+    conn = mock_engine.connections[-1]
+    conn.run_sync.assert_called_once_with(orm.Base.metadata.create_all)
+
+    # check update
+    assert len(mock_session.statements) == 1
