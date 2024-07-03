@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup, Tag
 import models
 from . import data
 from . import utils
-from ..generic import Scraper
+from ..generic import ResultsScraper
 from ..requester import HTTPClient, Limiter
 
 __all__ = ["SportproScraper"]
@@ -20,7 +20,7 @@ client = HTTPClient()
 RowType = TypeVar("RowType", bound=data.Row)
 
 
-class SportproScraper(Scraper):
+class SportproScraper(ResultsScraper):
     host = "https://www.sportpro.re"
     results_path = "/resultats/"
     

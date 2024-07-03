@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncContextManager
+from typing import AsyncContextManager, AsyncIterator
 
 from sqlalchemy import delete, select, update, ValuesBase
 from sqlalchemy.dialects.mysql import insert, Insert
@@ -61,6 +61,15 @@ class MySQLClient(Database):
             yield self
         finally:
             await self.dispose()
+
+    async def search_competitions(self) -> dict[int, models.CompetitionMetaData]:
+        async with self.__db_session() as session:
+            res = await session.execute(select(orm.CompetitionEvent))
+            rows = res.scalars().all()
+            return {
+                row.id: row.to_competition_metadata()
+                for row in rows
+            }
 
     async def update_competition(
             self,

@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup, Tag
 
 import models
 from . import parser, utils
-from ..generic import Scraper
+from ..generic import MetadataScraper
 from ..requester import HTTPClient, Limiter
 
 __all__ = ["RunRaidScraper"]
@@ -17,7 +17,7 @@ limiter = Limiter(1)
 client = HTTPClient()
 
 
-class RunRaidScraper(Scraper):
+class RunRaidScraper(MetadataScraper):
     """
     This scraper gets competitions details -> it is not meant to scrap results,
     since it is not a timekeeper

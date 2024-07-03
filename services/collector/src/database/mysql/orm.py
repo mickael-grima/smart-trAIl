@@ -60,6 +60,18 @@ class CompetitionEvent(Base):
             competition_id=competition_id,
         )
 
+    def to_competition_metadata(self) -> models.CompetitionMetaData:
+        return models.CompetitionMetaData(
+            event=self.name,
+            date=models.Date(
+                start=self.start_date,
+                end=self.end_date,
+            ),
+            distance=self.distance,
+            positive_elevation=self.positive_elevation,
+            negative_elevation=self.negative_elevation,
+        )
+
 
 class Result(Base):
     __tablename__ = "results"

@@ -24,6 +24,13 @@ class Database(abc.ABC):
         Find & Update the corresponding competition
         """
 
+    @abc.abstractmethod
+    async def search_competitions(self) -> dict[int, models.CompetitionMetaData]:
+        """
+        Get all competition events from the DB
+        :return: a mapping (id -> event) for each found event
+        """
+
     @classmethod
     @asynccontextmanager
     async def client(cls):

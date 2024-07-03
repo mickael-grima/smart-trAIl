@@ -1,18 +1,52 @@
 import asyncio
 import logging
 
-from scrapers import discover as discover_scrapers, Scraper
+from scrapers import (
+    discover_timekeepers as discover_timekeepers_scrapers,
+    discover_metadata_scrapers,
+    ResultsScraper,
+    MetadataScraper
+)
 from database import client as db_client, Database
 from controller import BackgroundController
 
 logger = logging.getLogger(__name__)
 
 
-async def run_single(scraper: Scraper, db: Database):
+async def run_single_results_scraper(scraper: ResultsScraper, db: Database):
+    """
+    Run `scraper.scrap()` function to iterate all found competition events
+    and the results
+    Concurrently, add those data in the DB
+
+    :param scraper: the scraper that will iterate competitions and results
+    :param db: the database client
+    """
     controller = BackgroundController()
 
     async for competition in scraper.scrap():
         controller.run_in_background(db.add_competition(competition))
+
+    while controller.running:
+        await asyncio.sleep(0.01)
+
+
+async def run_metadata_scraper(scraper: MetadataScraper, db: Database):
+    """
+    Execute `scraper.scrap()` to iterate a set of events' metadata
+    Then, concurrently, update the DB events with those metadata
+
+    :param scraper: the scraper that will iterate competition events' metadata
+    :param db: the database client
+    """
+    controller = BackgroundController()
+    all_competitions = await db.search_competitions()
+
+    async for metadata in scraper.scrap():
+        comp_id = metadata.find_best_match(all_competitions)
+        if comp_id is None:
+            continue
+        controller.run_in_background(db.update_competition(comp_id, metadata))
 
     while controller.running:
         await asyncio.sleep(0.01)
@@ -24,9 +58,15 @@ async def run():
     logging.getLogger().setLevel(logging.INFO)
 
     async with db_client() as db:
+        # first fetch the data from timekeepers
         await asyncio.gather(*[
-            run_single(scraper, db)
-            for scraper in discover_scrapers()
+            run_single_results_scraper(scraper, db)
+            for scraper in discover_timekeepers_scrapers()
+        ])
+        # then fetch metadata (elevations for example)
+        await asyncio.gather(*[
+            run_metadata_scraper(scraper, db)
+            for scraper in discover_metadata_scrapers()
         ])
 
 
