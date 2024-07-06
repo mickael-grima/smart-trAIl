@@ -37,7 +37,7 @@ class HTTPClient:
             trust_env=True,
         )
 
-    async def get(self, url: str, params: dict = None, retry_no: int = 0) -> str:
+    async def get(self, url: str, params: dict = None, retry_no: int = 0) -> bytes:
         """
         Send a request to URL, and fetch its response's body to return it
         Response status code are handled and logged accordingly
@@ -54,7 +54,7 @@ class HTTPClient:
             async with self._session.get(url, params=params) as resp:
                 status = resp.status
                 resp.raise_for_status()
-                return await resp.text()
+                return await resp.read()
         except aiohttp.ClientError:
             if status == 429:
                 if retry_no >= self._nb_retries:

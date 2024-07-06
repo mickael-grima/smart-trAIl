@@ -50,7 +50,9 @@ async def run_metadata_scraper(scraper: MetadataScraper, db: Database):
     async for metadata in scraper.scrap():
         comp_id = metadata.find_best_match(all_competitions)
         if comp_id is None:
+            logger.debug(f"{metadata.event} has a no best match")
             continue
+        logger.debug(f"{metadata.event} has a best match: {all_competitions[comp_id].event}")
         controller.run_in_background(db.update_competition(comp_id, metadata))
 
     while controller.running:

@@ -67,7 +67,7 @@ class SportproScraper(ResultsScraper):
         if self._errors:
             logger.warning(f"{len(self._errors)} collected!")
     
-    def __scrap_competitions(self, html: str) -> Iterator[tuple[str | None, models.Competition]]:
+    def __scrap_competitions(self, html: bytes) -> Iterator[tuple[str | None, models.Competition]]:
         soup = BeautifulSoup(html, "lxml")
         table = soup.find_all("table", attrs={"id": "resList"})[0]
         for row in self.__parse_table(table, data.CompetitionRow):
