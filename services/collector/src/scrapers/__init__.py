@@ -1,2 +1,2 @@
-from .generic import Scraper
-from .main import discover
+from .generic import ResultsScraper, MetadataScraper
+from .main import discover_timekeepers, discover_metadata_scrapers

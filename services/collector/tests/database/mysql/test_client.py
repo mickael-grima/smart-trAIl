@@ -110,6 +110,23 @@ def mock_session():
         else:
             session.current_index += 1
             res.fetchone = Mock(return_value=[session.current_index])
+            res.scalars.return_value.all = Mock(return_value=[
+                orm.CompetitionEvent(
+                    id=111,
+                    name="event1",
+                    start_date="2024-07-03",
+                    distance=23,
+                    positive_elevation=1050,
+                ),
+                orm.CompetitionEvent(
+                    id=112,
+                    name="event2",
+                    start_date="2024-05-21",
+                    distance=43,
+                    positive_elevation=2100,
+                    negative_elevation=2100,
+                ),
+            ])
         return res
 
     session.execute = execute
@@ -168,3 +185,39 @@ async def test_MySQLClient_add_competition(mock_engine, mock_session):
     assert isinstance(statements[-2], Delete)
     # insert results
     assert isinstance(statements[-1], Insert)
+
+
+@pytest.mark.asyncio
+async def test_MySQLClient_update_competition(mock_engine, mock_session):
+    metadata = models.CompetitionMetaData(
+        event="whatever",
+        date=models.Date(start=date(year=2024, month=4, day=8)),
+        distance=24.,
+        positive_elevation=1050,
+        negative_elevation=None,
+    )
+
+    async with MySQLClient.client() as db:
+        await db.update_competition(1, metadata)
+
+    # check table creations
+    assert len(mock_engine.connections) == 1
+    conn = mock_engine.connections[-1]
+    conn.run_sync.assert_called_once_with(orm.Base.metadata.create_all)
+
+    # check update
+    assert len(mock_session.statements) == 1
+
+
+@pytest.mark.asyncio
+async def test_MySQLClient_search_competitions(mock_engine, mock_session):
+    async with MySQLClient.client() as db:
+        _ = await db.search_competitions()
+
+    # check table creations
+    assert len(mock_engine.connections) == 1
+    conn = mock_engine.connections[-1]
+    conn.run_sync.assert_called_once_with(orm.Base.metadata.create_all)
+
+    # check update
+    assert len(mock_session.statements) == 1

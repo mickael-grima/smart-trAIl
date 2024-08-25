@@ -3,7 +3,7 @@ import logging
 from datetime import date, timedelta
 
 from sqlalchemy import ForeignKey, UniqueConstraint, String, Date, Time, PrimaryKeyConstraint
-from sqlalchemy.dialects.mysql import SMALLINT, CHAR, INTEGER, YEAR
+from sqlalchemy.dialects.mysql import SMALLINT, CHAR, INTEGER, YEAR, DECIMAL
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column
 
 import models
@@ -39,7 +39,9 @@ class CompetitionEvent(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date] = mapped_column(Date, nullable=True)
-    distance: Mapped[int] = mapped_column(SMALLINT(unsigned=True), nullable=False)
+    distance: Mapped[float] = mapped_column(DECIMAL(4, 1), nullable=False)
+    positive_elevation: Mapped[int] = mapped_column(SMALLINT, nullable=True)
+    negative_elevation: Mapped[int] = mapped_column(SMALLINT, nullable=True)
     competition_id: Mapped[int] = mapped_column(ForeignKey("competitions.id"), nullable=False)
 
     # competition should be unique with name, timekeeper and start_date
@@ -53,7 +55,21 @@ class CompetitionEvent(Base):
             name=comp.event,
             start_date=comp.date.start.strftime("%Y-%m-%d"),
             distance=comp.distance,
-            competition_id=competition_id
+            positive_elevation=comp.positive_elevation,
+            negative_elevation=comp.negative_elevation,
+            competition_id=competition_id,
+        )
+
+    def to_competition_metadata(self) -> models.CompetitionMetaData:
+        return models.CompetitionMetaData(
+            event=self.name,
+            date=models.Date(
+                start=self.start_date,
+                end=self.end_date,
+            ),
+            distance=self.distance,
+            positive_elevation=self.positive_elevation,
+            negative_elevation=self.negative_elevation,
         )
 
 

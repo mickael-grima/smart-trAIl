@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup, Tag
 import models
 from . import data
 from . import utils
-from ..generic import Scraper
+from ..generic import ResultsScraper
 from ..requester import HTTPClient, Limiter
 
 __all__ = ["SportproScraper"]
@@ -20,7 +20,7 @@ client = HTTPClient()
 RowType = TypeVar("RowType", bound=data.Row)
 
 
-class SportproScraper(Scraper):
+class SportproScraper(ResultsScraper):
     host = "https://www.sportpro.re"
     results_path = "/resultats/"
     
@@ -67,7 +67,7 @@ class SportproScraper(Scraper):
         if self._errors:
             logger.warning(f"{len(self._errors)} collected!")
     
-    def __scrap_competitions(self, html: str) -> Iterator[tuple[str | None, models.Competition]]:
+    def __scrap_competitions(self, html: bytes) -> Iterator[tuple[str | None, models.Competition]]:
         soup = BeautifulSoup(html, "lxml")
         table = soup.find_all("table", attrs={"id": "resList"})[0]
         for row in self.__parse_table(table, data.CompetitionRow):

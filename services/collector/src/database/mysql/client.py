@@ -2,9 +2,9 @@ import asyncio
 import datetime
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncContextManager
+from typing import AsyncContextManager, AsyncIterator
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update, ValuesBase
 from sqlalchemy.dialects.mysql import insert, Insert
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker, create_async_engine, AsyncEngine, AsyncSession)
@@ -62,6 +62,31 @@ class MySQLClient(Database):
         finally:
             await self.dispose()
 
+    async def search_competitions(self) -> dict[int, models.CompetitionMetaData]:
+        async with self.__db_session() as session:
+            res = await session.execute(select(orm.CompetitionEvent))
+            rows = res.scalars().all()
+            return {
+                row.id: row.to_competition_metadata()
+                for row in rows
+            }
+
+    async def update_competition(
+            self,
+            comp_id: int,
+            competition: models.CompetitionMetaData
+    ):
+        stmt = (
+            update(orm.CompetitionEvent)
+            .where(orm.CompetitionEvent.id ==  comp_id)
+            .values(
+                distance=competition.distance,
+                positive_elevation=competition.positive_elevation,
+                negative_elevation=competition.negative_elevation,
+            )
+        )
+        await self.__execute(stmt, orm.CompetitionEvent.__tablename__)
+
     async def add_competition(self, competition: models.Competition):
         # first add competitions and runners, and collect their db ids
         runners = [result.runner for result in competition.results]
@@ -109,6 +134,21 @@ class MySQLClient(Database):
             async with self.__db_session() as session:
                 result = await session.execute(stmt)
                 return result.inserted_primary_key
+
+    async def __execute(self, stmt: ValuesBase, lock_table: str):
+        """
+        Execute insert statement
+
+        :param stmt: DML stmt to execute
+        :param lock_table: If not None, create an async lock unique to `lock_table` string
+        (usually the table's name). Useful to avoid Deadlocks
+
+        :return: the sorted list of newly created ids, in the order
+            of the provided data
+        """
+        async with get_lock(lock_table):
+            async with self.__db_session() as session:
+                await session.execute(stmt)
 
     async def __add_competition(
             self,
