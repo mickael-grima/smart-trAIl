@@ -1,10 +1,11 @@
 import asyncio
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from unittest.mock import Mock, patch
 
 import pytest
 
-from .context import main
+from collector import main
 
 
 @pytest.fixture()
@@ -25,6 +26,7 @@ def db():
     async def search_competitions():
         await asyncio.sleep(0.02)
         d.search_competitions_calls += 1
+        return defaultdict(Mock)
 
     d.add_competition = add_competition
     d.update_competition = update_competition
@@ -34,7 +36,7 @@ def db():
     async def client():
         yield d
 
-    with patch("main.db_client", client):
+    with patch("collector.main.db_client", client):
         yield d
 
 
@@ -55,8 +57,8 @@ def scrapers():
 
     scrapers = [mock_scraper(), mock_scraper()]
 
-    with patch("main.discover_timekeepers_scrapers", Mock(return_value=scrapers)), \
-         patch("main.discover_metadata_scrapers", Mock(return_value=scrapers)):
+    with patch("collector.main.discover_timekeepers_scrapers", Mock(return_value=scrapers)), \
+         patch("collector.main.discover_metadata_scrapers", Mock(return_value=scrapers)):
         yield scrapers
 
 

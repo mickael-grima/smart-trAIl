@@ -1,8 +1,0 @@
-aiohttp[speedups]==3.9.3
-pydantic==2.6.4
-beautifulsoup4==4.12
-lxml==5.1
-sqlalchemy[asyncio]==2.0.29
-asyncmy==0.2.9
-python-dotenv==1.0.1
-levenshtein==0.25.1

@@ -3,7 +3,7 @@ from unittest.mock import patch, Mock
 
 import pytest
 
-from ..context import database
+from collector import database
 
 
 @pytest.fixture()
@@ -12,7 +12,7 @@ def client():
     async def mock_client():
         yield "test"
 
-    with patch("database.main.MySQLClient.client", mock_client):
+    with patch("collector.database.main.MySQLClient.client", mock_client):
         yield mock_client
 
 

@@ -1,9 +1,9 @@
 import pytest
 
-from ..context import scrapers
-from scrapers import MetadataScraper, ResultsScraper
-from scrapers.sportpro import SportproScraper
-from scrapers.runraid import RunRaidScraper
+from collector.scrapers import MetadataScraper, ResultsScraper, \
+    discover_metadata_scrapers, discover_timekeepers
+from collector.scrapers.runraid import RunRaidScraper
+from collector.scrapers.sportpro import SportproScraper
 
 
 def is_equal(
@@ -25,13 +25,13 @@ def is_equal(
 def test_discover_metadata_scrapers(
         scrapers_: list[str] | None,
         expected: list[MetadataScraper] | Exception):
-    res = list(scrapers.discover_metadata_scrapers(scrapers=scrapers_))
+    res = list(discover_metadata_scrapers(scrapers=scrapers_))
     is_equal(res, expected)
 
 
 def test_discover_metadata_scrapers_error():
     with pytest.raises(KeyError):
-        scrapers.discover_metadata_scrapers(scrapers=["unknown"])
+        discover_metadata_scrapers(scrapers=["unknown"])
 
 
 @pytest.mark.parametrize(
@@ -44,10 +44,10 @@ def test_discover_metadata_scrapers_error():
 def test_discover_timekeepers(
         scrapers_: list[str] | None,
         expected: list[ResultsScraper] | Exception):
-    res = list(scrapers.discover_timekeepers(scrapers=scrapers_))
+    res = list(discover_timekeepers(scrapers=scrapers_))
     is_equal(res, expected)
 
 
 def test_discover_timekeepers_scrapers_error():
     with pytest.raises(KeyError):
-        scrapers.discover_timekeepers(scrapers=["unknown"])
+        discover_timekeepers(scrapers=["unknown"])

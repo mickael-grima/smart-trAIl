@@ -1,7 +1,6 @@
 import pytest
 
-from ...context import scrapers
-from scrapers.runraid import parser
+from collector.scrapers.runraid import parser
 
 
 def test_parse_date():

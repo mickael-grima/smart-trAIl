@@ -3,8 +3,8 @@ from typing import Optional
 
 import pytest
 
-from ...context import scrapers, models
-from scrapers.sportpro import data
+from collector import models
+from collector.scrapers.sportpro import data
 
 
 def test_Row():

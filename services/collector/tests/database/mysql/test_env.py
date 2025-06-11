@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-from ...context import database
-from database.mysql import env
+from collector import database
+from collector.database.mysql import env
 
 
 @pytest.mark.parametrize(

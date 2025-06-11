@@ -2,8 +2,7 @@ from datetime import timedelta
 
 import pytest
 
-from ...context import database
-from database.mysql import utils
+from collector.database.mysql import utils
 
 
 @pytest.mark.parametrize(

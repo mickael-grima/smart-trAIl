@@ -2,7 +2,7 @@ from datetime import datetime, date
 
 import pytest
 
-from .context import utils
+from collector import utils
 
 
 @pytest.mark.parametrize(
@@ -71,7 +71,7 @@ from .context import utils
     ]
 )
 def test_string_similarity(s1: str, s2: str, expected: float):
-    sim = utils.string_similarity(s1, s2)
+    sim = utils.sentence_similarity(s1, s2)
     assert abs(sim - expected) < 10e-3, \
         f"Unexpected {sim:.3f}, when {expected:.3f} was expected. \n\"{s1}\" to \"{s2}\""
 
