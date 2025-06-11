@@ -2,8 +2,7 @@ from datetime import date
 
 import pytest
 
-from ...context import scrapers
-from scrapers.runraid import utils
+from collector.scrapers.runraid import utils
 
 
 @pytest.mark.parametrize(

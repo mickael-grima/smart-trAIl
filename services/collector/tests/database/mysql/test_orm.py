@@ -2,8 +2,8 @@ from datetime import date, timedelta
 
 import pytest
 
-from ...context import database, models
-from database.mysql import orm
+from collector import models
+from collector.database.mysql import orm
 
 
 @pytest.mark.parametrize(

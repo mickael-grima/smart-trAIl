@@ -1,0 +1,133 @@
+[project]
+dynamic = ["version"]
+name = "collector"
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp[speedups]==3.9.3",
+    "pydantic==2.6.4",
+    "beautifulsoup4==4.12",
+    "lxml==5.1",
+    "sqlalchemy[asyncio]==2.0.29",
+    "asyncmy==0.2.9",
+    "python-dotenv==1.0.1",
+    "levenshtein==0.25.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage",
+    "pytest",
+    "pytest-cov",
+    "pytest-asyncio",
+    "pre-commit",
+]
+
+[tool.black]
+line-length = 99
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+strict = true
+
+[tool.ruff]
+# Some IDEs always run ruff with --fix.  Command-line arguments override
+# settings in this file, so `fix = false` will not work.  Instead, consider no
+# rules fixable.
+lint.fixable = []
+lint.select = ["ALL"]
+lint.exclude = ["tests/**"]
+lint.ignore = [
+    "I", # isort does it.
+    "COM", "Q", # Black does it.
+    "CPY", # OMG! Who, the hell, cares?!
+    "FIX", # TODO by itself is enough.
+
+    "ARG001", # Unused function argument
+    "ANN101", # missing-type-self
+    "ANN102", # missing-type-cls
+    "INP001", # Implicit namespace package. They are lambdas
+    "D100", # Missing docstring in public module
+    "D104", # Missing docstring in public package
+    "FBT001", # Boolean-typed positional argument in function definition
+    "FBT002", # Boolean default positional argument in function definition
+    "FBT003", # Boolean positional value in function call
+    "PTH123", # Use `Path.open` instead of `open`
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "ANN001", # Missing type annotation for function argument
+    "ANN201", # Missing return type annotation for public function
+    "B017", # `pytest.raises(Exception)` should be considered evil
+    "D100", # Missing docstring in public module
+    "D103", # undocumented-public-function
+    "E402", # module import not at top of file
+    "E722", # do not use bare except
+    "INP001", # Implicit namespace package
+    "PD901", # Avoid using the generic variable name `df` for DataFrames
+    "PLR2004", # Magic value used in comparison
+    "PT011", # `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+    "PT012", # `pytest.raises()` block should contain a single simple statement
+    "PTH123", # Use `Path.open` instead of `open`
+    "S101", # assert,
+    "S311", # Standard pseudo-random generators are not suitable for security/cryptographic purposes
+    "SLF001", # Private member accessed
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+
+# Config for pytest coverage
+[tool.coverage.run]
+source = ["src/"]
+omit = ["**/__init__.py"]
+
+[tool.coverage.report]
+exclude_also = [
+    "pragma: no cover",
+    "if __name__ == '__main__':",
+    "if TYPE_CHECKING:", # typing imports only
+]
+show_missing = true
+fail_under = 97.96
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+pythonpath = "src"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.numpydoc_validation]
+checks = [
+    "all", # report on all checks
+    "ES01", # but don't require an extended summary
+    "EX01", # or examples
+    "SA01", # or a see also section
+    "SS06", # and don't require the summary to fit on one line
+]
+exclude = [# don't report on checks for these
+    '\.__init__$',
+    '\.__repr__$',
+    '\.__str__$',
+]
+override_SS05 = [# override SS05 to allow docstrings starting with these words
+    '^Process ',
+    '^Assess ',
+    '^Access ',
+]
+
+[tool.uv]
+managed = true
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11.4",
+]

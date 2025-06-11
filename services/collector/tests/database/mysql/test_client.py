@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from datetime import date, timedelta
 from typing import AsyncContextManager
@@ -7,8 +8,11 @@ import pytest
 from sqlalchemy import Select, Delete
 from sqlalchemy.dialects.mysql import Insert
 
-from ...context import database, models
-from database.mysql import Client as MySQLClient, orm
+from collector import models
+from collector.database.mysql import Client as MySQLClient, orm
+
+os.environ["MYSQL_ADDRESS"] = "test"
+
 
 competition = models.Competition(
     name="Transvolcano",
@@ -53,7 +57,6 @@ competition = models.Competition(
 )
 
 
-@patch("database.mysql.env.Environments.url", Mock(return_value="mysql+asyncmy://root:xxx@test:3901/test"))
 @pytest.fixture()
 def mock_engine():
     """
@@ -74,7 +77,12 @@ def mock_engine():
 
     engine.begin = begin
 
-    with patch("database.mysql.client.create_async_engine", Mock(return_value=engine)):
+    with patch(
+            "collector.database.mysql.client.create_async_engine",
+            Mock(return_value=engine)), \
+        patch(
+            "collector.database.mysql.env.Environments.url",
+            Mock(return_value="mysql+asyncmy://root:xxx@test:3901/test")):
         yield engine
 
 
@@ -141,7 +149,9 @@ def mock_session():
     async def async_session() -> AsyncContextManager[Mock]:
         yield session
 
-    with patch("database.mysql.client.async_sessionmaker", Mock(return_value=async_session)):
+    with patch(
+            "collector.database.mysql.client.async_sessionmaker",
+            Mock(return_value=async_session)):
         yield session
 
 

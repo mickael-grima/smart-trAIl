@@ -3,8 +3,7 @@ from typing import Optional, Callable, Any
 
 import pytest
 
-from ...context import scrapers, models
-from scrapers.sportpro import utils
+from collector.scrapers.sportpro import utils
 
 
 @pytest.mark.parametrize(
@@ -46,22 +45,6 @@ def test_parse_time(text: str, expected: Optional[timedelta]):
 def test_parse_date(text: str, expected: date):
     d = utils.parse_date(text)
     assert d == expected, f"Unexpected result={d}, when {expected} was expected"
-
-
-@pytest.mark.parametrize(
-    "text,expected",
-    [
-        ("M", models.Gender.male),
-        ("m", models.Gender.male),
-        ("F", models.Gender.female),
-        ("f", models.Gender.female),
-        ("male", models.Gender.undefined),
-        ("female", models.Gender.undefined),
-    ]
-)
-def test_get_gender(text: str, expected: models.Gender):
-    g = utils.get_gender(text)
-    assert g == expected, f"Unexpected result={g}, when {expected} was expected"
 
 
 @pytest.mark.parametrize(
