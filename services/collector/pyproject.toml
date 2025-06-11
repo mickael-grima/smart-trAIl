@@ -42,7 +42,7 @@ lint.ignore = [
     "I", # isort does it.
     "COM", "Q", # Black does it.
     "CPY", # OMG! Who, the hell, cares?!
-    "FIX", # TODO by itself is enough.
+    "FIX",
 
     "ARG001", # Unused function argument
     "ANN101", # missing-type-self
