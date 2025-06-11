@@ -1,0 +1,38 @@
+name: 'Run Pre-Commit checks'
+description: 'Run Pre-Commit checks'
+
+inputs:
+  package:  # id of input
+    description: 'The package where to bump the version'
+    required: true
+  source_code:
+    description: "Set the source directory of the code"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+      - name: Check Pre-Commit config existence
+        id: config-exists
+        run: ./.github/actions/pre_commit/pre_commit_config_exists.sh
+        shell: bash
+        env:
+          PACKAGE: ${{ inputs.package }}
+
+      # Can't use pre-commit/action since the pre-commit should run only
+      # on a subfolder
+      - name: Run pre-commit
+        if: ${{ steps.config-exists.outputs.has_config == 'true' }}
+        run: ./.github/actions/pre_commit/run_pre_commit.sh
+        shell: bash
+        env:
+          PACKAGE: ${{ inputs.package }}
+          SOURCE_CODE: ${{ inputs.source_code }}
+
+      - name: Apply Pre-commit Fixes
+        if: ${{ steps.config-exists.outputs.has_config == 'true' }}
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Apply pre-commit fixes"
+          push_options: --force
+          file_pattern: "${{ inputs.package }}/**"

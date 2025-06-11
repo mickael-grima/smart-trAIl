@@ -1,0 +1,146 @@
+name: Checks On Pull Request to Main
+on:
+  pull_request:
+    paths:
+      - "packages/**"
+    branches:
+      - 'main'
+
+env:
+  AWS_REGION : eu-west-1
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  # Make sure the title starts with the wanted prefix
+  # this is necessary to later upgrade to the right version
+  # (see publish workflow)
+  title-check:
+    name: Check Title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        with:
+          types: |
+            FEAT
+            FIX
+            RELEASE
+
+  # Filter out packages that have no changes
+  filter-changed-packages:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.filter.outputs.subdirectories }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        uses: './.github/actions/collect_changed_subdirectories'
+        with:
+          directory: "packages"
+          commit_sha: ${{github.sha}}
+
+  # Upgrade the current package version depending on the title prefix
+  version_bumper:
+    runs-on: ubuntu-latest
+    needs: [ title-check, filter-changed-packages ]
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.filter-changed-packages.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      # Set-Up python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Extract PR title prefix
+      - name: Title Prefix
+        id: title-prefix
+        run: |
+          prefix="${TITLE%%:*}"
+          echo "title_prefix=$prefix" >> "$GITHUB_OUTPUT"
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+
+      # bump version
+      - name: Update version and push to git
+        id: version-bumper
+        uses: './.github/actions/bump_version'
+        with:
+          package: "packages/${{matrix.package}}"
+          type: ${{ steps.title-prefix.outputs.title_prefix }}
+          branch_name: ${{ github.head_ref }}
+
+  # Pre-commit checks: is the code well written?
+  pre-commit:
+    name: Pre-commit checks
+    runs-on: ubuntu-latest
+    needs: [ filter-changed-packages ]
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.filter-changed-packages.outputs.packages) }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: "Pre-Commit checks"
+        uses: "./.github/actions/pre_commit"
+        with:
+          package: "packages/${{ matrix.package }}"
+          source_code: "src"
+
+  # Unittests
+  pytest:
+    name: Run Pytest
+    runs-on: ubuntu-latest
+    needs: [ filter-changed-packages ]
+    strategy:
+      matrix:
+        python-version: [ "3.12" ]
+        package: ${{ fromJSON(needs.filter-changed-packages.outputs.packages) }}
+    env:
+      ENV: dev
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: 'eu-west-1'
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ACTIONS_ROLE }}
+        role-session-name: GitHubActions
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Run tests
+      uses: ./.github/actions/pytest
+      with:
+        parent_directory: "packages"
+        name: ${{ matrix.package }}
+        source_code: "src/${{ matrix.package }}"
+        aws_deployment_account_id: ${{ secrets.AWS_DEPLOYMENT_ACCOUNT_ID }}

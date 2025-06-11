@@ -1,0 +1,46 @@
+name: 'Run Pytest tests'
+description: 'Run Pytest tests'
+
+inputs:
+  parent_directory:
+    description: 'The parnt directory of the package/service'
+    required: true
+  name:  # id of input
+    description: 'The package/service where to run the tests'
+    required: true
+  source_code:
+    description: "Set the source directory of the code"
+    required: true
+  aws_deployment_account_id:
+    description: 'deployment AWS account id'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check existence of tests
+      run: cd ${DIRECTORY} && if ! find tests -name "*.py" | grep -q .; then exit 1; fi
+      shell: bash
+      env:
+        DIRECTORY: "${{ inputs.parent_directory }}/${{ inputs.name }}"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: "0.7.2"
+
+    - name: Install Dependencies
+      run: ./.github/actions/pytest/install_dependencies.sh
+      shell: bash
+      env:
+        DIRECTORY: "${{ inputs.parent_directory }}/${{ inputs.name }}"
+        AWS_DEPLOYMENT_ACCOUNT_ID: ${{ inputs.aws_deployment_account_id }}
+
+    - name: Run Pytest
+      run: ./.github/actions/pytest/run_pytest.sh
+      shell: bash
+      env:
+        NAME: ${{ inputs.name }}
+        PARENT: ${{ inputs.parent_directory }}
+        PYTHONPATH: "./${{ inputs.source_code }}"
+        SOURCE_CODE: ${{ inputs.source_code }}

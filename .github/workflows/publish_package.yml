@@ -1,0 +1,68 @@
+name: Publish Package
+on:
+  pull_request:
+    paths:
+      - "packages/**"
+    types:
+      - closed
+    branches:
+      - 'main'
+
+jobs:
+  # Filter out packages that have no changes
+  filter-changed-packages:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    outputs:
+      packages: ${{ steps.filter.outputs.subdirectories }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        uses: './.github/actions/collect_changed_subdirectories'
+        with:
+          directory: "packages"
+
+  # Build & Publish pacakge to CodeArtifact
+  publish:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    needs: [ filter-changed-packages ]
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.filter-changed-packages.outputs.packages) }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      # Configure AWS to request CodeArtifact
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-west-1
+          role-to-assume: ${{ secrets.AWS_PUBLISH_ROLE }}
+          role-session-name: RepoPublishPackage
+          role-duration-seconds: 900
+
+      # install python
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: 'Publish to Codeartifact'
+        uses: './.github/actions/publish_to_codeartifact'
+        with:
+          package: "packages/${{ matrix.package }}"
+          aws_domain: ""
+          aws_repository: ""
+

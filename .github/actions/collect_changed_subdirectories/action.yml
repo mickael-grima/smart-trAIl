@@ -1,0 +1,34 @@
+name: 'Collect changed Subdirectories'
+description: 'Find all the subdirectories belonging to the input `directory` and return only the one with changed files'
+
+inputs:
+  directory:  # id of input
+    description: 'The directory from where to collect all subdirectories'
+    required: true
+  commit_sha:
+    description: 'The commit sha that will be compared to latest main commit'
+    required: false
+
+outputs:
+  subdirectories:
+    description: "The collected subdirectories"
+    value: ${{ steps.filter.outputs.subdirectories }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Collect Subdirectories
+      id: collect
+      run: ./.github/actions/collect_changed_subdirectories/all_subdirectories.sh
+      shell: bash
+      env:
+        DIRECTORY: ${{ inputs.directory }}
+
+    - name: Filter Subdirectories
+      id: filter
+      run: ./.github/actions/collect_changed_subdirectories/filter_changed_directories.sh
+      shell: bash
+      env:
+        PARENT_DIRECTORY: ${{ inputs.directory }}
+        DIRECTORIES: ${{ join(fromJSON(steps.collect.outputs.subdirectories), ' ') }}
+        COMMIT_SHA: ${{ inputs.commit_sha }}

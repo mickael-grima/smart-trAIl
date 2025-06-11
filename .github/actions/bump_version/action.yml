@@ -1,0 +1,37 @@
+name: 'Bump version depending on the type: FIX, FEAT, RELEASE'
+description: 'Find & Return all the subdirectories belonging to the input `directory`'
+
+inputs:
+  package:  # id of input
+    description: 'The package where to bump the version'
+    required: true
+  type:
+    description: 'the change type: FIX, FEAT or RELEASE'
+    required: true
+  branch_name:
+    description: 'the branch that is compared to main to detect version changes'
+
+runs:
+  using: "composite"
+  steps:
+    # Install dependencies
+    - name: Install dependencies
+      run: pip install hatch
+      shell: bash
+
+    - name: version files unchanged check
+      id: version-unchanged-check
+      run: ./.github/actions/bump_version/detect_changes.sh
+      shell: bash
+      env:
+        PACKAGE: ${{ inputs.package }}
+        BRANCH_NAME: ${{ inputs.branch_name }}
+
+    # If no version changed yet, update the patch version
+    - name: bump version
+      if: ${{ steps.version-unchanged-check.outputs.version_changed != 'true' }}
+      run: ./.github/actions/bump_version/bump_version.sh
+      shell: bash
+      env:
+        PACKAGE: ${{ inputs.package }}
+        TYPE: ${{ inputs.type }}
