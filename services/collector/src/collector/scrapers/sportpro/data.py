@@ -175,7 +175,7 @@ class ResultRow(Row):
         """Transform this row into a Result model."""
         rank: models.Rank | None = None
         status = self.get_status()
-        if status == models.ResultStatus.finisher:
+        if status == models.ResultStatus.FINISHER:
             rank = models.Rank(
                 scratch=self.scratch,
                 gender=self.sex_ranking,
@@ -200,16 +200,16 @@ class ResultRow(Row):
         """Convert the scrapped status into a more readable one (in english)."""
         match self.status:
             case "finisher":
-                return models.ResultStatus.finisher
+                return models.ResultStatus.FINISHER
             case "Abandon":
-                return models.ResultStatus.abandoned
+                return models.ResultStatus.ABANDONED
             case "Non partant":
-                return models.ResultStatus.non_starter
+                return models.ResultStatus.NON_STARTER
             case "Disqualification":
-                return models.ResultStatus.disqualified
+                return models.ResultStatus.DISQUALIFIED
             case "":
-                return models.ResultStatus.unknown
+                return models.ResultStatus.UNKNOWN
             case _:
                 logger.warning(
                     "Unknown status=\"%s\" from row=%s", self.status, self)
-                return models.ResultStatus.unknown
+                return models.ResultStatus.UNKNOWN

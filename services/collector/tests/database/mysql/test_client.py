@@ -26,7 +26,7 @@ competition = models.Competition(
                 first_name="Georges",
                 last_name="POMPIDOU",
                 birth_year=1992,
-                gender=models.Gender.male,
+                gender=models.Gender.MALE,
             ),
             time=timedelta(hours=30, minutes=34, seconds=35),
             rank=models.Rank(
@@ -34,7 +34,7 @@ competition = models.Competition(
                 gender=22,
                 category=13,
             ),
-            status=models.ResultStatus.finisher,
+            status=models.ResultStatus.FINISHER,
             race_number=34234,
             license="LICENCE",
             category="SEH"
@@ -44,11 +44,11 @@ competition = models.Competition(
                 first_name="Georges",
                 last_name="POMPIDOU",
                 birth_year=1992,
-                gender=models.Gender.male,
+                gender=models.Gender.MALE,
             ),
             time=None,
             rank=None,
-            status=models.ResultStatus.abandoned,
+            status=models.ResultStatus.ABANDONED,
             race_number=34234,
             license="LICENCE",
             category="SEH"

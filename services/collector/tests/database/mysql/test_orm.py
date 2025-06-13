@@ -63,7 +63,7 @@ def test_CompetitionEvent(competition: models.Competition, expected: dict):
                     first_name="Georges",
                     last_name="POMPIDOU",
                     birth_year=1992,
-                    gender=models.Gender.male,
+                    gender=models.Gender.MALE,
                 ),
                 time=timedelta(hours=30, minutes=34, seconds=35),
                 rank=models.Rank(
@@ -71,7 +71,7 @@ def test_CompetitionEvent(competition: models.Competition, expected: dict):
                     gender=22,
                     category=13,
                 ),
-                status=models.ResultStatus.finisher,
+                status=models.ResultStatus.FINISHER,
                 race_number=34234,
                 license="LICENCE",
                 category="SEH"
@@ -94,11 +94,11 @@ def test_CompetitionEvent(competition: models.Competition, expected: dict):
                     first_name="Georges",
                     last_name="POMPIDOU",
                     birth_year=1992,
-                    gender=models.Gender.male,
+                    gender=models.Gender.MALE,
                 ),
                 time=None,
                 rank=None,
-                status=models.ResultStatus.abandoned,
+                status=models.ResultStatus.ABANDONED,
                 race_number=34234,
                 license="LICENCE",
                 category="SEH"
@@ -131,7 +131,7 @@ def test_Result(result: models.Result, expected: dict):
                 first_name="Georges",
                 last_name="POMPIDOU",
                 birth_year=1992,
-                gender=models.Gender.male,
+                gender=models.Gender.MALE,
             ),
             dict(
                 first_name="Georges",
@@ -144,7 +144,7 @@ def test_Result(result: models.Result, expected: dict):
             models.Runner(
                 first_name="Georges",
                 last_name="POMPIDOU",
-                gender=models.Gender.male,
+                gender=models.Gender.MALE,
             ),
             dict(
                 first_name="Georges",
@@ -158,7 +158,7 @@ def test_Result(result: models.Result, expected: dict):
                 first_name="Georges",
                 last_name="POMPIDOU",
                 birth_year=1900,
-                gender=models.Gender.male,
+                gender=models.Gender.MALE,
             ),
             dict(
                 first_name="Georges",
@@ -172,7 +172,7 @@ def test_Result(result: models.Result, expected: dict):
                 first_name="Georges",
                 last_name="POMPIDOU",
                 birth_year=3000,
-                gender=models.Gender.male,
+                gender=models.Gender.MALE,
             ),
             dict(
                 first_name="Georges",

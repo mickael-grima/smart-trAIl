@@ -10,20 +10,20 @@ from collector import utils
 class Gender(enum.StrEnum):
     """Gender possibilities."""
 
-    male = "M"
-    female = "F"
-    undefined = "U"
+    MALE = "M"
+    FEMALE = "F"
+    UNDEFINED = "U"
 
 
 @enum.unique
 class ResultStatus(enum.StrEnum):
     """Race result statuses."""
 
-    finisher = "finisher"
-    abandoned = "abandoned"
-    non_starter = "non-starter"
-    disqualified = "disqualified"
-    unknown = "unknown"
+    FINISHER = "finisher"
+    ABANDONED = "abandoned"
+    NON_STARTER = "non-starter"
+    DISQUALIFIED = "disqualified"
+    UNKNOWN = "unknown"
 
 
 class Date(pydantic.BaseModel):
